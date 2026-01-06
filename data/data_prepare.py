@@ -672,8 +672,9 @@ class data_prepare:
         inputpath=glv.get('raw_usbond')
         signal_name = 'usbond_' + str(period)
         ori_name = self.rename_code_by_folder_wind(signal_name)
+        start_date=gt.last_workday_calculate(self.start_date)
         inputpath = str(
-            inputpath) + f" Where code='{ori_name}' And trade_date between '{self.start_date}' and '{self.end_date}'"
+            inputpath) + f" Where code='{ori_name}' And trade_date between '{start_date}' and '{self.end_date}'"
         df1 = gt.data_getting(inputpath, config_path)
         df1.rename(columns={'trade_date':'valuation_date','close':signal_name},inplace=True)
         df1['valuation_date'] = pd.to_datetime(df1['valuation_date'])
@@ -692,9 +693,10 @@ class data_prepare:
                 slice_df['valuation_date']=self.end_date
                 df1=pd.concat([df1,slice_df])
         df1[signal_name]=df1[signal_name].shift(1)
+        df1.fillna(method='bfill', inplace=True)
         df = self.raw_bond(period)
         df = df.merge(df1, on='valuation_date', how='left')
-        df.fillna(method='ffill',inplace=True)
+        df.fillna(method='ffill', inplace=True)
         df.dropna(inplace=True)
         df['value']=df['CGB_'+str(period)]-df[signal_name]
         df=df[['valuation_date','value']]

@@ -2,214 +2,171 @@ Bond_10Y:
   L1_factor: MacroLiquidity
   L2_factor: Bond
   L3_factor: Bond_10Y
-  Best_x: 0.75
 Bond_3Y:
   L1_factor: MacroLiquidity
   L2_factor: Bond
   L3_factor: Bond_3Y
-  Best_x: 0.75
 TargetIndex_BBANDS:
   L1_factor: IndexPriceVolume
   L2_factor: TargetIndex_Technical
   L3_factor: TargetIndex_BBANDS
-  Best_x: 0.55
 TargetIndex_MACD:
   L1_factor: IndexPriceVolume
   L2_factor: TargetIndex_Technical
   L3_factor: TargetIndex_MACD
-  Best_x: 0.55
 TargetIndex_PSA:
   L1_factor: IndexPriceVolume
   L2_factor: TargetIndex_Technical
   L3_factor: TargetIndex_PSA
-  Best_x: 0.55
 TargetIndex_MOMENTUM:
   L1_factor: IndexPriceVolume
   L2_factor: TargetIndex_Momentum
   L3_factor: TargetIndex_MOMENTUM
-  Best_x: 0.55
 TargetIndex_MOMENTUM2:
   L1_factor: IndexPriceVolume
   L2_factor: TargetIndex_Momentum
   L3_factor: TargetIndex_MOMENTUM2
-  Best_x: 0.55
 TargetIndex_REVERSE:
   L1_factor: IndexPriceVolume
   L2_factor: TargetIndex_Momentum
   L3_factor: TargetIndex_REVERSE
-  Best_x: 0.55
 TargetIndex_RSRS:
   L1_factor: IndexPriceVolume
   L2_factor: TargetIndex_Technical
   L3_factor: TargetIndex_RSRS
-  Best_x: 0.55
 CreditSpread_5Y:
   L1_factor: MacroLiquidity
   L2_factor: CreditSpread
   L3_factor: CreditSpread_5Y
-  Best_x: 0.75
 CreditSpread_9M:
   L1_factor: MacroLiquidity
   L2_factor: CreditSpread
   L3_factor: CreditSpread_9M
-  Best_x: 0.75
 Monthly_effect:
   L1_factor: SpecialFactor
   L2_factor: Monthly_effect
   L3_factor: Monthly_effect
-  Best_x: 0.55
 TermSpread_9Y:
   L1_factor: MacroLiquidity
   L2_factor: TermSpread
   L3_factor: TermSpread_9Y
-  Best_x: 0.55
 NLBP_difference:
   L1_factor: StockCapital
   L2_factor: NLBP_difference
   L3_factor: NLBP_difference
-  Best_x: 0.8
 CPI:
   L1_factor: MacroEconomy
   L2_factor: CPI
   L3_factor: CPI
-  Best_x: 0.7
 PPI:
   L1_factor: MacroEconomy
   L2_factor: PPI
   L3_factor: PPI
-  Best_x: 0.55
 PMI:
   L1_factor: MacroEconomy
   L2_factor: PMI
   L3_factor: PMI
-  Best_x: 0.8
 EarningsYield_Reverse:
   L1_factor: StockFundamentals
   L2_factor: EarningsYield_Reverse
   L3_factor: EarningsYield_Reverse
-  Best_x: 0.8
 LHBProportion:
   L1_factor: StockCapital
   L2_factor: LHBProportion
   L3_factor: LHBProportion
-  Best_x: 0.8
 RelativeVolume_std:
   L1_factor: IndexPriceVolume
   L2_factor: RelativeIndex_Std
   L3_factor: RelativeVolume_std
-  Best_x: 0.65
 RelativeReturn_std:
   L1_factor: IndexPriceVolume
   L2_factor: RelativeIndex_Std
   L3_factor: RelativeReturn_std
-  Best_x: 0.65
 LargeOrder_difference:
   L1_factor: StockCapital
   L2_factor: LargeOrder_difference
   L3_factor: LargeOrder_difference
-  Best_x: 0.7
 Growth:
   L1_factor: StockFundamentals
   L2_factor: Growth
   L3_factor: Growth
-  Best_x: 0.6
 USDX:
   L1_factor: StockCapital
   L2_factor: USDX
   L3_factor: USDX
-  Best_x: 0.75
 USBond_3Y:
   L1_factor: StockCapital
   L2_factor: USBond
   L3_factor: USBond_3Y
-  Best_x: 0.75
 USBond_10Y:
   L1_factor: StockCapital
   L2_factor: USBond
   L3_factor: USBond_10Y
-  Best_x: 0.75
 M1M2:
   L1_factor: MacroLiquidity
   L2_factor: M1M2
   L3_factor: M1M2
-  Best_x: 0.65
 Stock_HL:
   L1_factor: StockEmotion
   L2_factor: IndividualStock_Emotion
   L3_factor: Stock_HL
-  Best_x: 0.8
 Stock_RT:
   L1_factor: StockEmotion
   L2_factor: IndividualStock_Emotion
   L3_factor: Stock_RT
-  Best_x: 0.8
 Shibor_2W:
   L1_factor: MacroLiquidity
   L2_factor: Shibor
   L3_factor: Shibor_2W
-  Best_x: 0.8
 Shibor_9M:
   L1_factor: MacroLiquidity
   L2_factor: Shibor
   L3_factor: Shibor_9M
-  Best_x: 0.8
 RRScore_difference:
   L1_factor: SpecialFactor
   L2_factor: RRScore_difference
   L3_factor: RRScore_difference
-  Best_x: 0.55
 Relative_turnover:
   L1_factor: StockEmotion
   L2_factor: Relative_turnover
   L3_factor: Relative_turnover
-  Best_x: 0.6
 Bank_momentum:
   L1_factor: StockEmotion
   L2_factor: Bank_Momentum
   L3_factor: Bank_Momentum
-  Best_x: 0.65
 Future_Holding:
   L1_factor: SpecialFactor
   L2_factor: Future_holding
   L3_factor: Future_holding
-  Best_x: 0.7
 Future_difference:
   L1_factor: StockEmotion
   L2_factor: Future_difference
   L3_factor: Future_difference
-  Best_x: 0.55
 Index_PE:
   L1_factor: StockFundamentals
   L2_factor: TargetIndex_Fundamentals
   L3_factor: Index_PE
-  Best_x: 0.7
 Index_PB:
   L1_factor: StockFundamentals
   L2_factor: TargetIndex_Fundamentals
   L3_factor: Index_PB
-  Best_x: 0.7
 CopperGold:
   L1_factor: MacroEconomy
   L2_factor: CopperGold
   L3_factor: CopperGold
-  Best_x: 0.7
 BMCI:
   L1_factor: MacroEconomy
   L2_factor: BMCI
   L3_factor: BMCI
-  Best_x: 0.55
 DBI:
   L1_factor: MacroEconomy
   L2_factor: DBI
   L3_factor: DBI
-  Best_x: 0.6
 PCT:
   L1_factor: MacroEconomy
   L2_factor: PCT
   L3_factor: PCT
-  Best_x: 0.6
 ETF_Shares:
   L1_factor: StockCapital
   L2_factor: ETF_Shares
   L3_factor: ETF_Shares
-  Best_x: 0.75

@@ -36,12 +36,10 @@ L2_signal_test:
     private_keys:
       - "valuation_date"
       - 'signal_name'
-      - 'x'
     schema:
       valuation_date: { type: String, length: 50 }
       signal_name: { type: String, length: 50 }
       final_signal: { type: Float }
-      x: { type: Float }
       update_time: { type: String, length: 50 }
 L2_signal_prod:
     table_name: "timeselecting_l2_prod"
@@ -51,12 +49,10 @@ L2_signal_prod:
     private_keys:
       - "valuation_date"
       - 'signal_name'
-      - 'x'
     schema:
       valuation_date: { type: String, length: 50 }
       signal_name: { type: String, length: 50 }
       final_signal: { type: Float }
-      x: { type: Float }
       update_time: { type: String, length: 50 }
 L1_signal_test:
     table_name: "timeselecting_l1_test"

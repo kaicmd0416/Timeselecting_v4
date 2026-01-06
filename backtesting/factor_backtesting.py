@@ -165,9 +165,8 @@ class factor_backtesting:
             bp.back_testing_history(df_portfolio, outputpath, index_type, index_name, self.signal_name)
         return outputpath
 class L3factor_backtesting:
-    def __init__(self,signal_name,start_date,end_date,cost,mode,big_indexName,small_indexName,big_proportion,small_proportion):
+    def __init__(self,signal_name,end_date,cost,mode,big_indexName,small_indexName,big_proportion,small_proportion):
         self.signal_name=signal_name
-        self.start_date=start_date
         self.end_date=end_date
         self.cost=cost
         self.mode=mode
@@ -191,12 +190,7 @@ class L3factor_backtesting:
         df.sort_values(by='valuation_date',inplace=True)
         running_date=df['valuation_date'].unique().tolist()[0]
         running_date=gt.strdate_transfer(running_date)
-        if self.start_date<running_date:
-            start_date=running_date
-            print(self.start_date+'目前没有数据，已经自动调整到:'+str(running_date))
-        else:
-            start_date=self.start_date
-        return start_date
+        return running_date
     def index_return_withdraw(self):
         df_return = gt.indexData_withdraw(None,self.start_date,self.end_date,['pct_chg'])
         df_return = gt.sql_to_timeseries(df_return)
@@ -247,75 +241,95 @@ class L3factor_backtesting:
         df_signal=df_signal[['valuation_date',self.signal_name+'_'+x]]
         return df_signal
     def technical_signal_calculator(self,df):
-        # Initialize result DataFrame
-        result_df = pd.DataFrame(columns=['portfolio_name', 'annual_return', 'regression_annual_return', 'max_drawdown'])
-
-        # Get portfolio columns (excluding valuation_date)
-        portfolio_cols = [col for col in df.columns if col != 'valuation_date']
-
-        for portfolio in portfolio_cols:
-            # Calculate annualized return
-            nav0 = df[portfolio].iloc[0]
-            navt = df[portfolio].iloc[-1]
-            total_return = navt / nav0
-            t = len(df)  # Use total number of trading days
-            annual_return = (total_return ** (365 / t) - 1) * 100  # Convert to annual rate and percentage
-
-            # Calculate regression annualized return using ln(navt) - ln(navo) = kt
-            k = (np.log(navt) - np.log(nav0)) / t
-            regression_annual_return = k * 252 * 100  # Convert to annual rate and percentage
-
-            # Calculate maximum drawdown
-            rolling_max = df[portfolio].expanding().max()
-            drawdowns = (df[portfolio] - rolling_max) / rolling_max
-            max_drawdown = abs(drawdowns.min()) * 100
-
-            # Calculate longest new high days
-            rolling_max = df[portfolio].expanding().max()
-            new_highs = df[portfolio] >= rolling_max
-            longest_streak = 0
-            current_streak = 0
-            for is_new_high in new_highs:
-                if is_new_high:
-                    current_streak += 1
-                    longest_streak = max(longest_streak, current_streak)
-                else:
-                    current_streak = 0
-
-            # Add results to DataFrame
-            result_df = pd.concat([result_df, pd.DataFrame({
-                'portfolio_name': [portfolio],
-                'annual_return': [annual_return],
-                'regression_annual_return': [regression_annual_return],
-                'max_drawdown': [-max_drawdown]
-            })], ignore_index=True)
-
-        # 对除了portfolio_name以外的列进行排序，最小值为0，最大值为len(df)
-        numeric_columns = ['annual_return', 'regression_annual_return', 'max_drawdown']
-        rank_columns = []
-        for col in numeric_columns:
-            if col in result_df.columns:
-                # 使用rank方法进行排序，method='min'确保相同值获得相同排名
-                result_df[col + '_rank'] = result_df[col].rank(method='min', ascending=True) - 1
-                # 确保排名从0开始到len(df)-1
-                result_df[col + '_rank'] = result_df[col + '_rank'].astype(int)
-                rank_columns.append(col + '_rank')
+        # 确保df按日期排序
+        df = df.sort_values(by='valuation_date').reset_index(drop=True)
         
-        # 计算每行rank的平均值
-        if rank_columns:
-            result_df['rank_average'] = result_df[rank_columns].mean(axis=1)
-        # 输出portfolio_name和rank_average
-        output_df = result_df[['portfolio_name', 'rank_average']].copy()
+        # 获取portfolio列（排除valuation_date）
+        portfolio_cols = [col for col in df.columns if col != 'valuation_date']
+        
+        # 初始化输出DataFrame
+        output_df = pd.DataFrame(columns=['valuation_date', 'portfolio_name', 'rank_average'])
+        
+        # 从第二个日期开始迭代（第一个日期没有前一个工作日）
+        for i in range(500, len(df)):
+            current_date = df['valuation_date'].iloc[i]
+            # 使用从开始到当前日期前一个工作日的数据
+            df_window = df.iloc[:i].copy()
+            
+            # 初始化当前日期的结果DataFrame
+            result_df = pd.DataFrame(columns=['portfolio_name', 'annual_return', 'regression_annual_return', 'max_drawdown'])
+            
+            for portfolio in portfolio_cols:
+                # 计算年化收益率
+                nav0 = df_window[portfolio].iloc[0]
+                navt = df_window[portfolio].iloc[-1]
+                total_return = navt / nav0
+                t = len(df_window)  # 使用窗口内的交易日数量
+                if t > 0 and nav0 > 0:
+                    annual_return = (total_return ** (365 / t) - 1) * 100  # 转换为年化率和百分比
+                else:
+                    annual_return = 0
+                
+                # 使用 ln(navt) - ln(navo) = kt 计算回归年化收益率
+                if t > 0 and nav0 > 0 and navt > 0:
+                    k = (np.log(navt) - np.log(nav0)) / t
+                    regression_annual_return = k * 252 * 100  # 转换为年化率和百分比
+                else:
+                    regression_annual_return = 0
+                
+                # 计算最大回撤
+                if len(df_window) > 0:
+                    rolling_max = df_window[portfolio].expanding().max()
+                    drawdowns = (df_window[portfolio] - rolling_max) / rolling_max
+                    max_drawdown = abs(drawdowns.min()) * 100 if len(drawdowns) > 0 else 0
+                else:
+                    max_drawdown = 0
+                
+                # 添加结果到DataFrame
+                result_df = pd.concat([result_df, pd.DataFrame({
+                    'portfolio_name': [portfolio],
+                    'annual_return': [annual_return],
+                    'regression_annual_return': [regression_annual_return],
+                    'max_drawdown': [-max_drawdown]
+                })], ignore_index=True)
+            
+            # 对除了portfolio_name以外的列进行排序，最小值为0，最大值为len(df_window)
+            numeric_columns = ['annual_return', 'regression_annual_return', 'max_drawdown']
+            rank_columns = []
+            for col in numeric_columns:
+                if col in result_df.columns:
+                    # 使用rank方法进行排序，method='min'确保相同值获得相同排名
+                    result_df[col + '_rank'] = result_df[col].rank(method='min', ascending=True) - 1
+                    # 确保排名从0开始到len(df_window)-1
+                    result_df[col + '_rank'] = result_df[col + '_rank'].astype(int)
+                    rank_columns.append(col + '_rank')
+            
+            # 计算每行rank的平均值
+            if rank_columns:
+                result_df['rank_average'] = result_df[rank_columns].mean(axis=1)
+            
+            # 为当前日期添加结果
+            date_result = result_df[['portfolio_name', 'rank_average']].copy()
+            date_result['valuation_date'] = current_date
+            date_result = date_result[['valuation_date', 'portfolio_name', 'rank_average']]
+            
+            # 合并到输出DataFrame
+            output_df = pd.concat([output_df, date_result], ignore_index=True)
+        
+        # 将长格式转换为宽格式：每个portfolio作为列
+        if len(output_df) > 0:
+            output_df = output_df.pivot(index='valuation_date', columns='portfolio_name', values='rank_average')
+            output_df = output_df.reset_index()
+            output_df.columns.name = None  # 移除列名索引名称
+        
         return output_df
     def backtesting_main(self):
         df_signal=self.raw_signal_withdraw()
+        valuation_date_list=df_signal['valuation_date'].unique().tolist()
         x_list=df_signal['x'].unique().tolist()
         df_final = None
-        
         for base_index in [self.big_indexName ,self.small_indexName,'大小盘等权']:
-            print(base_index)
             proportion=self.big_proportion if base_index==self.big_indexName else self.small_proportion if base_index==self.small_indexName else (1-self.big_proportion-self.small_proportion)
-            
             # 为当前base_index计算df_nav
             df_nav=pd.DataFrame()
             n=1
@@ -327,40 +341,94 @@ class L3factor_backtesting:
                     n += 1
                 else:
                     df_nav = df_nav.merge(df_x, on='valuation_date', how='left')
-            
             # 计算当前base_index的df_output
             df_output = self.technical_signal_calculator(df_nav)
+            df_output.set_index('valuation_date',inplace=True,drop=True)
             # 将df_output按照proportion相乘
             df_output_weighted = df_output.copy()
-            numeric_columns = [col for col in df_output.columns if col != 'portfolio_name']
-            for col in numeric_columns:
-                df_output_weighted[col] = df_output[col] * proportion
+            df_output_weighted = df_output_weighted * proportion
             # 累加到最终结果
             if df_final is None:
                 df_final = df_output_weighted
             else:
-                # 确保portfolio_name列对齐，然后相加数值列
-                df_final = df_final.set_index('portfolio_name')
-                df_output_weighted = df_output_weighted.set_index('portfolio_name')
+                # 确保索引和列都对齐后再相加
                 df_final = df_final.add(df_output_weighted, fill_value=0)
-                df_final = df_final.reset_index()
-
-        # 处理portfolio_name，按照最后一个_分割
-        df_final['x'] = df_final['portfolio_name'].str.extract(r'_([^_]+)$')
-        df_final['portfolio_name'] = df_final['portfolio_name'].str.replace(r'_[^_]+$', '', regex=True)
-        
-        # 重新排列列的顺序，将x列放在portfolio_name之后
-        cols = df_final.columns.tolist()
-        cols.remove('x')
-        cols.insert(1, 'x')  # 将x列插入到第2个位置（portfolio_name之后）
-        df_final = df_final[cols]
-        return df_final
+        # 循环结束后，将索引重置为列
+        if df_final is not None:
+            df_final = df_final.reset_index()
+        # 处理df_final：对于每一天，找到rank值最大的列名
+        # 如果有相同的最大rank值，看前面N天哪个列名出现的最早，就用哪个
+        if df_final is not None and len(df_final) > 0:
+            # 获取所有portfolio列（排除valuation_date）
+            portfolio_cols = [col for col in df_final.columns if col != 'valuation_date']
+            
+            # 初始化结果DataFrame
+            result_list = []
+            
+            for idx in range(len(df_final)):
+                current_date = df_final['valuation_date'].iloc[idx]
+                current_row = df_final.iloc[idx]
+                
+                # 获取当前行的所有portfolio值
+                portfolio_values = {col: current_row[col] for col in portfolio_cols if pd.notna(current_row[col])}
+                
+                if len(portfolio_values) > 0:
+                    # 找到最大值
+                    max_value = max(portfolio_values.values())
+                    
+                    # 找到所有等于最大值的列名
+                    max_columns = [col for col, val in portfolio_values.items() if val == max_value]
+                    
+                    if len(max_columns) == 1:
+                        # 只有一个最大值，直接使用
+                        selected_column = max_columns[0]
+                    else:
+                        # 有多个相同的最大值，看前面N天哪个列名出现的最早
+                        # 回溯历史，找到这些列名中最早达到最大值的
+                        earliest_idx = len(df_final)  # 初始化为一个很大的值
+                        selected_column = max_columns[0]  # 默认选择第一个
+                        
+                        for col in max_columns:
+                            # 从当前行往前回溯，找到这个列名最早达到当前最大值的索引
+                            col_earliest_idx = len(df_final)  # 记录这个列名最早达到最大值的索引
+                            for prev_idx in range(idx, -1, -1):
+                                prev_row = df_final.iloc[prev_idx]
+                                if col in portfolio_cols and pd.notna(prev_row[col]):
+                                    if prev_row[col] == max_value:
+                                        # 更新这个列名最早达到最大值的索引
+                                        col_earliest_idx = prev_idx
+                            
+                            # 比较这个列名的最早索引，选择最早的那个
+                            if col_earliest_idx < earliest_idx:
+                                earliest_idx = col_earliest_idx
+                                selected_column = col
+                    
+                    result_list.append({
+                        'valuation_date': current_date,
+                        'rank': selected_column
+                    })
+            
+            df_result = pd.DataFrame(result_list)
+            
+            # 提取rank列中下划线后面的数字作为best_x
+            df_result['x'] = df_result['rank'].str.extract(r'_([\d.]+)$')
+            # 只保留valuation_date和best_x两列
+            df_result = df_result[['valuation_date', 'x']]
+            df_output=pd.DataFrame()
+            df_output['valuation_date']=valuation_date_list
+            df_output=df_output.merge(df_result,on='valuation_date',how='left')
+            df_output['x']=df_output['x'].shift(1)
+            df_output.fillna(method='bfill',inplace=True)
+            return df_output
 
 if __name__ == "__main__":
-    factor_list=['StockEmotion']
-    for factor_name in factor_list:
-        fbm=factor_backtesting(factor_name,'2015-01-01',"2025-12-31",0.00006,'prod','L1','上证50','中证2000',None,None)
-        fbm.backtesting_main()
+    fbm = L3factor_backtesting('CPI',  '2026-01-07', 0.00006, 'prod', '上证50',
+                               '中证2000', 0.15, 0.15)
+    fbm.backtesting_main()
+    # factor_list=['StockEmotion']
+    # for factor_name in factor_list:
+    #     fbm=factor_backtesting(factor_name,'2015-01-01',"2025-12-31",0.00006,'prod','L1','上证50','中证2000',None,None)
+    #     fbm.backtesting_main()
         # fbm = L3factor_backtesting(factor_name, '2015-01-01', '2025-11-31', 0.00006, 'test', '上证50',
         #                            '中证2000', 0.15, 0.15)
         # fbm.backtesting_main()

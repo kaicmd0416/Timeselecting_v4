@@ -91,66 +91,20 @@ class L2_signalConstruction:
         except Exception as e:
             print(f"查找因子信息时出错: {e}")
             return [] if name else None
-    def select_best_x(self, auto=False):
-        """
-        选择最佳的x值
-        
-        Parameters:
-        -----------
-        auto : bool
-            如果为True，则自动更新signal_dictionary.yaml文件中对应信号的Best_x值
-        
-        Returns:
-        --------
-        float
-            最佳的x值
-        """
-        factor_name_list = self.get_factor_info(self.signal_name, True)
-        df_merged = None
-        
-        for factor_name in factor_name_list:
-            print(f"正在处理因子: {factor_name}")
-            L3fb = L3factor_backtesting(factor_name, self.start_date, self.end_date, self.cost, self.mode, 
-                                      self.big_indexName, self.small_indexName, self.big_proportion, self.small_proportion)
-            df_x = L3fb.backtesting_main()
-            df_x = df_x[['x', 'rank_average']]
-            
-            # 重命名rank_average列以避免冲突
-            df_x = df_x.rename(columns={'rank_average': f'rank_average_{factor_name}'})
-            
-            if df_merged is None:
-                df_merged = df_x
-            else:
-                df_merged = df_merged.merge(df_x, on='x', how='outer')
-        
-        # 计算所有rank_average列的均值
-        rank_columns = [col for col in df_merged.columns if col.startswith('rank_average_')]
-        df_merged['mean_rank_average'] = df_merged[rank_columns].mean(axis=1)
-        
-        # 找到rank_average最高的x值
-        best_row = df_merged.loc[df_merged['mean_rank_average'].idxmax()]
-        best_x = best_row['x']
-        best_rank = best_row['mean_rank_average']
-        
-        print(f"所有因子合并后的结果:")
-        print(df_merged)
-        print(f"最佳x值: {best_x}, 对应的平均rank_average: {best_rank}")
-        
-        # 如果auto为True，更新YAML文件
-        if auto:
-            self.update_yaml_best_x(best_x)
-        
-        return best_x
-
-    def raw_signal_withdraw(self,signal_name,x):
+    def raw_signal_withdraw(self,signal_name,df_x):
         inputpath = self.inputpath_base
         inputpath = str(inputpath)+f" Where signal_name='{signal_name}' And valuation_date between '{self.start_date}' and '{self.end_date}'"
         df=gt.data_getting(inputpath,config_path)
-        df=df[df['x']==x]
+        # 统一x列的类型为字符串，以便合并
+        if 'x' in df_x.columns:
+            df_x['x'] = df_x['x'].astype(float)
+        if 'x' in df.columns:
+            df['x'] = df['x'].astype(float)
+        df=df_x.merge(df,on=['valuation_date','x'],how='left')
         df=df[['valuation_date','final_signal']]
         df.columns=['valuation_date',signal_name]
         return df
-    def L2_construction_main(self,auto):
+    def L2_construction_main(self):
         inputpath_sql = glv.get('sql_path')
         if self.mode=='prod':
              sm = gt.sqlSaving_main(inputpath_sql, 'L2_signal_prod', delete=True)
@@ -160,10 +114,11 @@ class L2_signalConstruction:
         df_final=pd.DataFrame()
         factor_name_list = self.get_factor_info(self.signal_name, True)
         for factor_name in factor_name_list:
-            if auto==True:
-                best_x = self.select_best_x(auto)
-            best_x = self.get_factor_info(factor_name, False)
-            df=self.raw_signal_withdraw(factor_name,best_x)
+            L3fb = L3factor_backtesting(factor_name, self.end_date, self.cost, self.mode,
+                                        self.big_indexName, self.small_indexName, self.big_proportion,
+                                        self.small_proportion)
+            df_x = L3fb.backtesting_main()
+            df=self.raw_signal_withdraw(factor_name,df_x)
             if n==1:
                 df_final=df
                 n+=1
@@ -185,12 +140,11 @@ class L2_signalConstruction:
         df_final.reset_index(inplace=True)
         df_final=df_final[['valuation_date',self.signal_name]]
         df_final['signal_name']=self.signal_name
-        df_final['x'] = best_x
         df_final['update_time']=datetime.now().replace(tzinfo=None)  # 当前时间
         df_final.rename(columns={self.signal_name:'final_signal'},inplace=True)
         sm.df_to_sql(df_final,'signal_name',self.signal_name)
-    def L2_backtest_main(self,auto=False):
-        self.L2_construction_main(auto)
+    def L2_backtest_main(self):
+        self.L2_construction_main()
         fb=factor_backtesting(self.signal_name,self.start_date,self.end_date,0.00006,self.mode,'L2',self.big_indexName,self.small_indexName,None,None)
         fb.backtesting_main()
 
@@ -199,7 +153,7 @@ if __name__ == "__main__":
     #'LHBProportion', 'LargeOrder_difference', 'USDX','IndividualStock_Emotion',USBond,'IndividualStock_Emotion','ETF_Shares'
     #['MacroLiquidity', 'IndexPriceVolume', 'SpecialFactor', 'StockCapital', 'MacroEconomy', 'StockFundamentals', 'StockEmotion']
     # 示例使用
-    signal_name ='ETF_Shares'# 示例信号名称
+    signal_name_list =['BMCI', 'Bank_Momentum', 'Bond', 'CPI', 'CopperGold', 'CreditSpread', 'DBI', 'ETF_Shares', 'EarningsYield_Reverse', 'Future_difference', 'Future_holding', 'Growth', 'IndividualStock_Emotion', 'LHBProportion', 'LargeOrder_difference', 'M1M2', 'Monthly_effect', 'NLBP_difference', 'PCT', 'PMI', 'PPI', 'RRScore_difference', 'RelativeIndex_Std', 'Relative_turnover', 'Shibor', 'TargetIndex_Fundamentals', 'TargetIndex_Momentum', 'TargetIndex_Technical', 'TermSpread', 'USBond', 'USDX']# 示例信号名称
     mode = "prod"         # 示例模式
     start_date = "2015-01-01"
     end_date = "2026-01-06"
@@ -208,10 +162,10 @@ if __name__ == "__main__":
     small_indexName = "中证2000"
     big_proportion = 0.15
     small_proportion = 0.15
-    
-    signal_constructor = L2_signalConstruction(signal_name, start_date, end_date, cost, mode, 
-                                             big_indexName, small_indexName, big_proportion, small_proportion)
-    signal_constructor.L2_backtest_main(False)
+    for signal_name in signal_name_list:
+        signal_constructor = L2_signalConstruction(signal_name, start_date, end_date, cost, mode,
+                                                   big_indexName, small_indexName, big_proportion, small_proportion)
+        signal_constructor.L2_backtest_main()
     
     # # 示例1：查找L2因子对应的L3因子
     # l2_factor_name = "Shibor"  # 示例L2因子名称
