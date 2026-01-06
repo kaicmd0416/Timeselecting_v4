@@ -1,0 +1,52 @@
+# Portfolio Configuration Settings
+# Portfolio Configuration Settings
+
+# 指数中文名称与投资组合名称映射
+index_mapping:
+  上证50:
+    portfolio_names:
+      - "Timeselecting_ETF_sz50"
+  沪深300:
+    portfolio_names:
+      - "Timeselecting_ETF_hs300"
+  中证A500:
+    portfolio_names:
+      - "Timeselecting_future_A500"
+  中性:
+    portfolio_names:
+      - "Timeselecting_future_hs300"
+      - "Timeselecting_future_sz50"
+      - "Timeselecting_future_hs300_pro"
+      - "Timeselecting_future_sz50_pro"
+      - "Timeselecting_future"
+
+
+## Index Categories and Their Portfolios
+#indices:
+#  hs300:
+#    portfolios:
+#      - name: "fm03_hs300_HB"
+#        weight: 1
+#        description: "HS300 Portfolio 1"
+#
+#  zz500:
+#    portfolios:
+#      - name: "combine_zz500_HB"
+#        weight: 1
+#        description: "ZZ500 Portfolio 1"
+#  zzA500:
+#    portfolios:
+#      - name: "fm03_zzA500_HB"
+#        weight: 1
+#        description: "ZZ500 Portfolio 1"
+#  zz1000:
+#    portfolios:
+#      - name: "a3_top200"
+#        weight: 1
+#        description: "ZZ1000 Portfolio 1"
+#  zz2000:
+#    portfolios:
+#      - name: "a3_zz2000_top100"
+#        weight: 1
+#        description: "ZZ2000 Portfolio 1"
+

@@ -1,0 +1,210 @@
+L3_signal_test:
+    table_name: "timeselecting_l3_test"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'signal_name'
+      - 'x'
+    schema:
+      valuation_date: { type: String, length: 50 }
+      signal_name: { type: String, length: 50 }
+      final_signal: { type: Float }
+      x: { type: Float }
+      update_time: { type: String, length: 50 }
+L3_signal_prod:
+    table_name: "timeselecting_l3_prod"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'signal_name'
+      - 'x'
+    schema:
+      valuation_date: { type: String, length: 50 }
+      signal_name: { type: String, length: 50 }
+      final_signal: { type: Float }
+      x: { type: Float }
+      update_time: { type: String, length: 50 }
+L2_signal_test:
+    table_name: "timeselecting_l2_test"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'signal_name'
+      - 'x'
+    schema:
+      valuation_date: { type: String, length: 50 }
+      signal_name: { type: String, length: 50 }
+      final_signal: { type: Float }
+      x: { type: Float }
+      update_time: { type: String, length: 50 }
+L2_signal_prod:
+    table_name: "timeselecting_l2_prod"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'signal_name'
+      - 'x'
+    schema:
+      valuation_date: { type: String, length: 50 }
+      signal_name: { type: String, length: 50 }
+      final_signal: { type: Float }
+      x: { type: Float }
+      update_time: { type: String, length: 50 }
+L1_signal_test:
+    table_name: "timeselecting_l1_test"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'signal_name'
+    schema:
+      valuation_date: { type: String, length: 50 }
+      signal_name: { type: String, length: 50 }
+      final_signal: { type: Float }
+      update_time: { type: String, length: 50 }
+L1_signal_prod:
+    table_name: "timeselecting_l1_prod"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'signal_name'
+    schema:
+      valuation_date: { type: String, length: 50 }
+      signal_name: { type: String, length: 50 }
+      final_signal: { type: Float }
+      update_time: { type: String, length: 50 }
+L0_signal_test:
+    table_name: "timeselecting_l0_test"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+    schema:
+      valuation_date: { type: String, length: 50 }
+      final_signal: { type: Float }
+      final_value: { type: Float }
+      update_time: { type: String, length: 50 }
+L0_signal_prod:
+    table_name: "timeselecting_l0_prod"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+    schema:
+      valuation_date: { type: String, length: 50 }
+      final_signal: { type: Float }
+      final_value: { type: Float }
+      update_time: { type: String, length: 50 }
+L2_signal_prod_backtest:
+    table_name: "timeselecting_backtest_l2_prod"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'signal_name'
+    schema:
+      valuation_date: { type: String, length: 50 }
+      signal_name: { type: String, length: 50 }
+      portfolio: { type: Float }
+      benchmark: { type: Float }
+      excess_return: { type: Float }
+      update_time: { type: String, length: 50 }
+L1_signal_prod_backtest:
+    table_name: "timeselecting_backtest_l1_prod"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'signal_name'
+    schema:
+      valuation_date: { type: String, length: 50 }
+      signal_name: { type: String, length: 50 }
+      portfolio: { type: Float }
+      benchmark: { type: Float }
+      excess_return: { type: Float }
+      update_time: { type: String, length: 50 }
+L0_signal_prod_backtest:
+    table_name: "timeselecting_backtest_l0_prod"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'signal_name'
+    schema:
+      valuation_date: { type: String, length: 50 }
+      signal_name: { type: String, length: 50 }
+      portfolio: { type: Float }
+      benchmark: { type: Float }
+      excess_return: { type: Float }
+      update_time: { type: String, length: 50 }
+L2_signal_test_backtest:
+    table_name: "timeselecting_backtest_l2_test"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'signal_name'
+    schema:
+      valuation_date: { type: String, length: 50 }
+      signal_name: { type: String, length: 50 }
+      portfolio: { type: Float }
+      benchmark: { type: Float }
+      excess_return: { type: Float }
+      update_time: { type: String, length: 50 }
+L1_signal_test_backtest:
+    table_name: "timeselecting_backtest_l1_test"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'signal_name'
+    schema:
+      valuation_date: { type: String, length: 50 }
+      signal_name: { type: String, length: 50 }
+      portfolio: { type: Float }
+      benchmark: { type: Float }
+      excess_return: { type: Float }
+      update_time: { type: String, length: 50 }
+L0_signal_test_backtest:
+    table_name: "timeselecting_backtest_l0_test"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'signal_name'
+    schema:
+      valuation_date: { type: String, length: 50 }
+      signal_name: { type: String, length: 50 }
+      portfolio: { type: Float }
+      benchmark: { type: Float }
+      excess_return: { type: Float }
+      update_time: { type: String, length: 50 }
+Portfolio_check:
+    table_name: "portfolio_check"
+    db_url: "mysql+pymysql://wc:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/portfolio?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'factor_name'
+
+

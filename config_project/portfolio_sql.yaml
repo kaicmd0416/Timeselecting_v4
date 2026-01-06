@@ -1,0 +1,45 @@
+Portfolio:
+    table_name: "portfolio"
+    db_url: "mysql+pymysql://prod:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/portfolio_new?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'code'
+      - 'portfolio_name'
+    schema:
+      valuation_date: { type: String, length: 50 }
+      code: { type: String, length: 50 }
+      portfolio_name: { type: String, length: 50 }
+      weight: { type: Float }
+      update_time: { type: DateTime }
+portfolio_info:
+    table_name: "portfolio_info"
+    db_url: "mysql+pymysql://prod:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/portfolio_new?autocommit=True "
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - "score_name"
+    schema:
+      valuation_date: { type: String, length: 50 }
+      mode_type: { type: String, length: 50 }
+      score_name: { type: String, length: 50 }
+      index_type: { type: String, length: 50 }
+      base_score: { type: String, length: 50 }
+      update_time: { type: String, length: 50 }
+portfolio_holding:
+    table_name: "portfolio_holding_upload"
+    db_url: "mysql+pymysql://prod:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/portfolio_new?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - "code"
+      - "portfolio_name"
+    schema:
+      valuation_date: { type: String, length: 50 }
+      code: { type: String, length: 50 }
+      portfolio_name: { type: String, length: 50 }
+      quantity: { type: Float }
+      update_time: { type: String, length: 50 }

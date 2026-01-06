@@ -1,0 +1,130 @@
+data_prepare_functions:
+  parameterized_functions:
+    raw_M1M2:
+      description: 货币供应量数据
+      effective_start_date: '2015-02-02'
+      parameters:
+      - M1
+      - M2
+    raw_ZZGK:
+      description: 国开债数据
+      effective_start_date: '2015-01-05'
+      parameters:
+      - 3M
+      - 9M
+      - 1Y
+      - 5Y
+      - 10Y
+    raw_ZZZD:
+      description: 中债中短数据
+      effective_start_date: '2015-01-05'
+      parameters:
+      - 3M
+      - 9M
+      - 5Y
+    raw_bond:
+      description: 国债收益率数据
+      effective_start_date: '2015-01-05'
+      parameters:
+      - 3Y
+      - 10Y
+    raw_index_amt:
+      description: 指数成交额数据
+      effective_start_date: '2015-01-05'
+      parameters:
+      - 沪深300
+      - 中证1000
+      - 国证2000
+    raw_index_turnover:
+      description: 指数换手率数据
+      effective_start_date: '2015-01-05'
+      parameters:
+      - 沪深300
+      - 中证1000
+      - 国证2000
+    raw_index_volume:
+      description: 指数成交量数据
+      effective_start_date: '2015-01-05'
+      parameters:
+      - 沪深300
+      - 中证1000
+      - 国证2000
+    raw_index_weight:
+      description: 指数权重数据
+      effective_start_date: '2015-01-05'
+      parameters:
+      - 沪深300
+      - 中证1000
+      - 国证2000
+    raw_index_close:
+      description: 指数收盘价数据
+      effective_start_date: '2015-01-05'
+      parameters:
+      - 沪深300
+      - 中证1000
+      - 国证2000
+    raw_shibor:
+      description: Shibor利率数据
+      effective_start_date: '2015-01-05'
+      parameters:
+      - 2W
+      - 9M
+  parameterless_functions:
+  - effective_start_date: '2015-01-05'
+    name: raw_usdx
+  - effective_start_date: '2020-01-02'
+    name: raw_index_earningsyield
+  - effective_start_date: '2020-01-02'
+    name: raw_index_growth
+  - effective_start_date: '2015-02-02'
+    name: raw_CPI_withdraw
+  - effective_start_date: '2015-02-02'
+    name: raw_PPI_withdraw
+  - effective_start_date: '2015-02-02'
+    name: raw_PMI_withdraw
+  - effective_start_date: '2022-07-19'
+    name: raw_LHBProportion_withdraw
+  - effective_start_date: '2022-07-20'
+    name: raw_NetLeverageBuying_withdraw
+  - effective_start_date: '2016-01-04'
+    name: raw_LargeOrder_withdraw
+  - effective_start_date: '2015-01-01'
+    name: raw_stockClose_withdraw
+  - effective_start_date: '2015-01-01'
+    name: raw_stockPct_withdraw
+  - effective_start_date: '2015-01-05'
+    name: index_return_withdraw
+  - effective_start_date: '2015-01-05'
+    name: index_return_withdraw2
+  - effective_start_date: '2015-01-05'
+    name: BankMomentum_withdraw
+  - effective_start_date: '2015-01-05'
+    name: target_index
+  - effective_start_date: '2015-01-05'
+    name: target_index_candle
+  - effective_start_date: '2015-01-05'
+    name: target_index_candle2
+  - effective_start_date: '2022-07-19'
+    name: future_difference_withdraw
+  - effective_start_date: '2024-01-02'
+    name: raw_vix_withdraw
+  - effective_start_date: '2024-01-04'
+    name: raw_rrscore_info
+  - effective_start_date: '2016-01-04'
+    name: raw_rrscore_withdraw
+  - effective_start_date: '2015-01-04'
+    name: raw_futureHolding
+  - effective_start_date: '2012-01-04'
+    name: raw_indexBasic
+  - effective_start_date: '1975-01-02'
+    name: raw_CopperGold
+  - effective_start_date: '2013-11-06'
+    name: raw_BMCI
+  - effective_start_date: '1988-10-19'
+    name: raw_DBI
+  - effective_start_date: '2008-09-01'
+    name: raw_PCT
+  - effective_start_date: '2015-01-04'
+    name: raw_fund
+  - effective_start_date: '2015-01-04'
+    name: raw_usbond

@@ -1,0 +1,306 @@
+{
+    "components": {
+        "data_source": {
+            "mode": "sql"
+        },
+        "database": {
+            "database1": {
+                "host": "rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com",
+                "port": 3306,
+                "user": "kai",
+                "password": "Abcd1234#",
+                "charset": "utf8mb4"
+            }
+        }
+    },
+    "main_folder": [
+        {
+            "folder_type": "output_folder",
+            "path": "Signal_v4",
+            "disk": "D"
+        },
+        {
+            "folder_type": "config_folder",
+            "path": "TimeSelecting_v4\\config_project",
+            "disk": "D"
+        }
+    ],
+    "sub_folder": [
+        {
+            "data_type": "sql_path",
+            "folder_name": "timeselecting_sql.yaml",
+            "folder_type": "config_folder"
+        },
+        {
+            "data_type": "index_info",
+            "database": "data_prepared_new",
+            "sql_sheet": "index_info"
+        },
+        {
+            "data_type": "raw_Shibor",
+            "folder_name": "macro_data\\Shibor.csv",
+            "folder_type": "input_folder",
+            "database": "winddb",
+            "sql_sheet": "shibor"
+        },
+        {
+            "data_type": "raw_rrscore",
+            "database": "data_prepared_new",
+            "sql_sheet": "data_score"
+        },
+        {
+            "data_type": "portfolio_info",
+            "database": "portfolio_new",
+            "sql_sheet": "portfolio_info"
+        },
+        {
+            "data_type": "raw_Bond",
+            "folder_name": "macro_data\\ChinaGovernmentBonds.csv",
+            "folder_type": "input_folder",
+            "database": "winddb",
+            "sql_sheet": "china_government_bonds"
+        },
+        {
+            "data_type": "raw_ZZGK",
+            "folder_name": "macro_data\\ChinaDevelopmentBankBonds.csv",
+            "folder_type": "input_folder",
+            "database": "winddb",
+            "sql_sheet": "china_development_bank_bonds"
+        },
+        {
+            "data_type": "raw_ZZZD",
+            "folder_name": "macro_data\\ChinaMediumTermNotes.csv",
+            "folder_type": "input_folder",
+            "database": "winddb",
+            "sql_sheet": "china_medium_term_notes"
+        },
+        {
+            "data_type": "raw_M1M2",
+            "folder_name": "macro_data\\M1M2.csv",
+            "folder_type": "input_folder",
+            "database": "winddb",
+            "sql_sheet": "m1m2"
+        },
+        {
+            "data_type": "raw_CPI",
+            "folder_name": "macro_data\\CPI.csv",
+            "folder_type": "input_folder",
+            "database": "winddb",
+            "sql_sheet": "cpi"
+        },
+        {
+            "data_type": "raw_usbond",
+            "database": "winddb",
+            "sql_sheet": "us_bond"
+        },
+        {
+            "data_type": "raw_PPI",
+            "folder_name": "macro_data\\PPI.csv",
+            "folder_type": "input_folder",
+            "database": "winddb",
+            "sql_sheet": "ppi"
+        },
+        {
+            "data_type": "raw_PMI",
+            "folder_name": "macro_data\\PMI.csv",
+            "folder_type": "input_folder",
+            "database": "winddb",
+            "sql_sheet": "pmi"
+        },
+        {
+            "data_type": "raw_DBI",
+            "database": "winddb",
+            "sql_sheet": "dbi"
+        },
+        {
+            "data_type": "raw_BMCI",
+            "database": "winddb",
+            "sql_sheet": "bmci"
+        },
+        {
+            "data_type": "raw_PCT",
+            "database": "winddb",
+            "sql_sheet": "portcoalthroughput"
+        },
+        {
+            "data_type": "raw_CopperGold",
+            "database": "winddb",
+            "sql_sheet": "coppergoldratio"
+        },
+        {
+            "data_type": "raw_socialfinance",
+            "database": "winddb",
+            "sql_sheet": "social_finance"
+        },
+        {
+            "data_type": "raw_USDX",
+            "folder_name": "us_data\\UsDollar.csv",
+            "folder_type": "input_folder",
+            "database": "winddb",
+            "sql_sheet": "us_dollar"
+        },
+        {
+            "data_type": "raw_indexFactor",
+            "database": "data_prepared_new",
+            "sql_sheet": "data_indexother"
+        },
+        {
+            "data_type": "raw_fundnav",
+            "database": "tusharedb",
+            "sql_sheet": "fund_nav"
+        },
+        {
+            "data_type": "raw_fundshare",
+            "database": "tusharedb",
+            "sql_sheet": "fund_share"
+        },
+        {
+            "data_type": "raw_futureHolding",
+            "database": "tusharedb",
+            "sql_sheet": "fut_holding"
+        },
+        {
+            "data_type": "raw_indexbasic",
+            "database": "tusharedb",
+            "sql_sheet": "index_dailybasic"
+        },
+        {
+            "data_type": "raw_intindex",
+            "database": "tusharedb",
+            "sql_sheet": "index_global"
+        },
+        {
+            "data_type": "raw_indexweight",
+            "folder_name": "index_data\\ygData.csv",
+            "folder_type": "input_folder",
+            "database": "data_prepared_new",
+            "sql_sheet": "data_indexcomponent"
+        },
+        {
+            "data_type": "raw_NLBPDifference",
+            "folder_name": "mkt_data\\NetLeverageBuying.csv",
+            "folder_type": "input_folder",
+            "database": "winddb",
+            "sql_sheet": "leverage_data"
+        },
+        {
+            "data_type": "raw_LargeOrder",
+            "folder_name": "mkt_data\\LargeOrderInflow.csv",
+            "folder_type": "input_folder",
+            "database": "winddb",
+            "sql_sheet": "large_order_inflow"
+        },
+        {
+            "data_type": "raw_LHBProportion",
+            "folder_name": "mkt_data\\LHB_AMT_proportion.csv",
+            "folder_type": "input_folder",
+            "database": "tusharedb",
+            "sql_sheet": "longhubang"
+        },
+        {
+            "data_type": "raw_vix",
+            "folder_name": "vix_data\\vix_timeWeight.csv",
+            "folder_type": "input_folder",
+            "database": "data_prepared_new",
+            "sql_sheet": "data_vix"
+        },
+        {
+            "data_type": "backtest_output",
+            "folder_name": "backtest",
+            "folder_type": "output_folder"
+        }
+        ,
+        {
+            "data_type": "L3_signalData_test",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_l3_test"
+        }
+        ,
+        {
+            "data_type": "L3_signalData_prod",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_l3_prod"
+        }
+        ,
+        {
+            "data_type": "L2_signalData_test",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_l2_test"
+        }
+        ,
+        {
+            "data_type": "L2_signalData_prod",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_l2_prod"
+        },
+        {
+            "data_type": "L1_signalData_test",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_l1_test"
+        }
+        ,
+        {
+            "data_type": "L1_signalData_prod",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_l1_prod"
+        }
+        ,
+        {
+            "data_type": "L0_signalData_test",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_l0_test"
+        }
+        ,
+        {
+            "data_type": "L0_signalData_prod",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_l0_prod"
+        },
+        {
+            "data_type": "L0_signalData_prod",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_l0_prod"
+        },
+        {
+            "data_type": "portfolio",
+            "database": "portfolio_new",
+            "sql_sheet": "portfolio"
+        }
+        ,
+        {
+            "data_type": "portfolio_test",
+            "database": "portfolio_new",
+            "sql_sheet": "portfolio"
+        },
+        {
+            "data_type": "L0_signalBacktest_prod",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_backtest_l0_prod"
+        },
+        {
+            "data_type": "L1_signalBacktest_prod",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_backtest_l1_prod"
+        },
+        {
+            "data_type": "L0_signalBacktest_test",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_backtest_l0_test"
+        },
+        {
+            "data_type": "L1_signalBacktest_test",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_backtest_l1_test"
+        },
+        {
+            "data_type": "L2_signalBacktest_prod",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_backtest_l2_prod"
+        },
+        {
+            "data_type": "L2_signalBacktest_test",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_backtest_l2_test"
+        }
+    ]
+}
