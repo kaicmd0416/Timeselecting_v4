@@ -247,6 +247,25 @@ class L3factor_backtesting:
         # 获取portfolio列（排除valuation_date）
         portfolio_cols = [col for col in df.columns if col != 'valuation_date']
         
+        # 如果数据长度小于500，返回所有rank都为0的DataFrame
+        if len(df) < 500:
+            # 创建所有日期和portfolio的组合，rank_average都为0
+            result_list = []
+            for date in df['valuation_date']:
+                for portfolio in portfolio_cols:
+                    result_list.append({
+                        'valuation_date': date,
+                        'portfolio_name': portfolio,
+                        'rank_average': 0
+                    })
+            output_df = pd.DataFrame(result_list)
+            # 将长格式转换为宽格式：每个portfolio作为列
+            if len(output_df) > 0:
+                output_df = output_df.pivot(index='valuation_date', columns='portfolio_name', values='rank_average')
+                output_df = output_df.reset_index()
+                output_df.columns.name = None  # 移除列名索引名称
+            return output_df
+        
         # 初始化输出DataFrame
         output_df = pd.DataFrame(columns=['valuation_date', 'portfolio_name', 'rank_average'])
         
@@ -419,10 +438,11 @@ class L3factor_backtesting:
             df_output=df_output.merge(df_result,on='valuation_date',how='left')
             df_output['x']=df_output['x'].shift(1)
             df_output.fillna(method='bfill',inplace=True)
+            df_output.fillna(0.5, inplace=True)
             return df_output
 
 if __name__ == "__main__":
-    fbm = L3factor_backtesting('CPI',  '2026-01-07', 0.00006, 'prod', '上证50',
+    fbm = L3factor_backtesting('TargetIndex_REVERSE',  '2026-01-07', 0.00006, 'prod', '上证50',
                                '中证2000', 0.15, 0.15)
     fbm.backtesting_main()
     # factor_list=['StockEmotion']

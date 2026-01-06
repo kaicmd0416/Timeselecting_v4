@@ -127,7 +127,7 @@ class L1_signalConstruction:
 
 if __name__ == "__main__":
     # 示例使用['MacroLiquidity', 'IndexPriceVolume', 'SpecialFactor', 'StockCapital', 'MacroEconomy', 'StockFundamentals', 'StockEmotion']
-    for signal_name in ['StockCapital']:
+    for signal_name in ['IndexPriceVolume', 'MacroEconomy', 'MacroLiquidity', 'SpecialFactor', 'StockCapital', 'StockEmotion', 'StockFundamentals']:
         #signal_name = "IndexPriceVolume"  # 示例L1因子名称
         mode = "prod"  # 示例模式
         start_date = "2015-01-01"
