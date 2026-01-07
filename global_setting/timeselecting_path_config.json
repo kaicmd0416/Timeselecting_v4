@@ -302,5 +302,17 @@
             "database": "signal_v4",
             "sql_sheet": "timeselecting_backtest_l2_test"
         }
+        ,
+        {
+            "data_type": "L3_best_x_prod",
+            "database": "signal_v4",
+            "sql_sheet": "timeselecting_l3_bestx_prod"
+        }
+        ,
+        {
+            "data_type": "V3_L3_best_x_prod",
+            "database": "signal_v3",
+            "sql_sheet": "timeselecting_l3_bestx_test"
+        }
     ]
 }
