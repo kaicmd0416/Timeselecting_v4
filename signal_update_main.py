@@ -113,9 +113,9 @@ def update_main():
     #                     break
     #         end_date = gt.last_workday_calculate(target_date)
     #         signal_backtesting_main(start_date, end_date, 'prod', big_indexName='上证50', small_indexName='中证2000')
-    # else:
-    #     print('L1,L2,L3因子更新存在错误')
-    #     raise ValueError
+    else:
+        print('L1,L2,L3因子更新存在错误')
+        raise ValueError
 
 #sqsqssqsqsqsqssqsqs
 if __name__ == "__main__":
