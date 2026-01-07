@@ -114,7 +114,7 @@ class L2_signalConstruction:
         df_final=pd.DataFrame()
         factor_name_list = self.get_factor_info(self.signal_name, True)
         for factor_name in factor_name_list:
-            L3fb = L3factor_backtesting(factor_name, self.end_date, self.cost, self.mode,
+            L3fb = L3factor_backtesting(factor_name, self.start_date,self.end_date, self.cost, self.mode,
                                         self.big_indexName, self.small_indexName, self.big_proportion,
                                         self.small_proportion)
             df_x = L3fb.backtesting_main()

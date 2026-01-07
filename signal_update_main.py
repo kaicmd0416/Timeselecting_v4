@@ -76,12 +76,12 @@ def update_main():
     target_date=target_date_decision()
     signal_checker=SignalChecker(target_date, target_date, 'prod')
     portfolio_checker=PortfolioChecker(target_date, 'prod')
-    scm = signal_constructing_main(None, target_date, target_date, ['L3', 'L2', 'L1'], 'prod', False, False,
+    scm = signal_constructing_main(None, target_date, target_date, ['L3', 'L2', 'L1'], 'prod', False,
                                    '上证50', '中证2000', 0.15, 0.15)
     scm.running_main()
     results2, status2 = signal_checker.check_all_signals()
     if status2 == 'normal':
-        scm = signal_constructing_main(None, target_date, target_date, ['L0'], 'prod', False, False,
+        scm = signal_constructing_main(None, target_date, target_date, ['L0'], 'prod', False,
                                        '上证50', '中证2000', 0.15, 0.15)
         scm.running_main()
         results3, status3 = signal_checker.check_l0_signals()

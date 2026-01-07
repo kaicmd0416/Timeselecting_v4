@@ -14,12 +14,12 @@ def history_config_withdraw():
     inputpath = glv.get('signal_parameters_history')
     df = pd.read_excel(inputpath)
     return df
-def update_main(signal_name,start_date,end_date,signal_type_list,mode,backtest,auto,big_indexName,small_indexName,big_proportion,small_proportion,portfolio): #触发这个
+def update_main(signal_name,start_date,end_date,signal_type_list,mode,backtest,big_indexName,small_indexName,big_proportion,small_proportion,portfolio): #触发这个
     # checker = RawDataChecker(start_date,end_date)
     # results, status = checker.check_data_prepare_functions()
     status='normal'
     if status=='normal':
-        scm = signal_constructing_main(signal_name, start_date,end_date, signal_type_list, mode, backtest, auto,
+        scm = signal_constructing_main(signal_name, start_date,end_date, signal_type_list, mode, backtest,
                                        big_indexName, small_indexName, big_proportion, small_proportion)
         scm.running_main()
     else:

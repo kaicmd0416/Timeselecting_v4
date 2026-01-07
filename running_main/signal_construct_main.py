@@ -55,7 +55,7 @@ class signal_constructing_main:
         小盘指数权重比例
     """
     
-    def __init__(self, signal_name, start_date, end_date, signal_type_list, mode, backtest, auto, 
+    def __init__(self, signal_name, start_date, end_date, signal_type_list, mode, backtest,
                  big_indexName, small_indexName, big_proportion, small_proportion):
         """
         初始化信号生成主控制器
@@ -91,7 +91,6 @@ class signal_constructing_main:
         self.end_date=end_date
         self.signal_type_list=signal_type_list
         self.backtest=backtest
-        self.auto=auto
         self.big_indexName = big_indexName
         self.small_indexName = small_indexName
         self.big_proportion = big_proportion
@@ -217,7 +216,7 @@ class signal_constructing_main:
                      L2S = L2_signalConstruction(l2_signal_name, self.start_date, self.end_date, 0.00006, self.mode,
                                                  self.big_indexName, self.small_indexName, self.big_proportion,
                                                  self.small_proportion)
-                     L2S.L2_construction_main(self.auto)
+                     L2S.L2_construction_main()
                      if self.backtest == True:
                          fb = factor_backtesting(self.signal_name, self.start_date, self.end_date, 0.00006, self.mode,
                                                  'L2',
@@ -252,7 +251,7 @@ class signal_constructing_main:
                      L2S = L2_signalConstruction(l2_signal_name, self.start_date, self.end_date, 0.00006, self.mode,
                                                  self.big_indexName, self.small_indexName, self.big_proportion,
                                                  self.small_proportion)
-                     L2S.L2_construction_main(self.auto)
+                     L2S.L2_construction_main()
                      if self.backtest == True:
                          fb = factor_backtesting(l2_signal_name, self.start_date, self.end_date, 0.00006, self.mode,
                                                  'L2',
@@ -266,7 +265,7 @@ class signal_constructing_main:
                 L2S = L2_signalConstruction(self.signal_name, self.start_date, self.end_date, 0.00006, self.mode,
                                             self.big_indexName, self.small_indexName, self.big_proportion,
                                             self.small_proportion)
-                L2S.L2_construction_main(self.auto)
+                L2S.L2_construction_main()
                 if self.backtest == True:
                     fb = factor_backtesting(self.signal_name, self.start_date, self.end_date, 0.00006, self.mode, 'L2',
                                             self.big_indexName, self.small_indexName, None)
@@ -285,7 +284,7 @@ class signal_constructing_main:
                         L2S = L2_signalConstruction(L2_signal_name, self.start_date, self.end_date, 0.00006, self.mode,
                                                     self.big_indexName, self.small_indexName, self.big_proportion,
                                                     self.small_proportion)
-                        L2S.L2_construction_main(self.auto)
+                        L2S.L2_construction_main()
                     L1S = L1_signalConstruction(L1_signal_name, self.start_date, self.end_date, self.mode)
                     L1S.L1_construction_main()
                     if self.backtest == True:
@@ -303,7 +302,7 @@ class signal_constructing_main:
                     L2S = L2_signalConstruction(L2_signal_name, self.start_date, self.end_date, 0.00006, self.mode,
                                                 self.big_indexName, self.small_indexName, self.big_proportion,
                                                 self.small_proportion)
-                    L2S.L2_construction_main(self.auto)
+                    L2S.L2_construction_main()
                 L1S = L1_signalConstruction(self.signal_name, self.start_date, self.end_date, self.mode)
                 L1S.L1_construction_main()
                 if self.backtest == True:
@@ -322,7 +321,7 @@ class signal_constructing_main:
                     L2S = L2_signalConstruction(L2_signal_name, self.start_date, self.end_date, 0.00006, self.mode,
                                                 self.big_indexName, self.small_indexName, self.big_proportion,
                                                 self.small_proportion)
-                    L2S.L2_construction_main(self.auto)
+                    L2S.L2_construction_main()
                 L1S = L1_signalConstruction(L1_signal_name, self.start_date, self.end_date, self.mode)
                 L1S.L1_construction_main()
             L0S = L0_signalConstruction(self.start_date, self.end_date, self.mode)
