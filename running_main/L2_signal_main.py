@@ -108,8 +108,10 @@ class L2_signalConstruction:
         inputpath_sql = glv.get('sql_path')
         if self.mode=='prod':
              sm = gt.sqlSaving_main(inputpath_sql, 'L2_signal_prod', delete=True)
+             sm2 = gt.sqlSaving_main(inputpath_sql, 'L3_bext_x_prod', delete=True)
         else:
             sm = gt.sqlSaving_main(inputpath_sql, 'L2_signal_test', delete=True)
+            sm2 = gt.sqlSaving_main(inputpath_sql, 'L3_bext_x_test', delete=True)
         n=1
         df_final=pd.DataFrame()
         factor_name_list = self.get_factor_info(self.signal_name, True)
@@ -118,6 +120,10 @@ class L2_signalConstruction:
                                         self.big_indexName, self.small_indexName, self.big_proportion,
                                         self.small_proportion)
             df_x = L3fb.backtesting_main()
+            df_x_sql=df_x.copy()
+            df_x_sql['signal_name']=factor_name
+            df_x_sql['update_time']=datetime.now().replace(tzinfo=None)  # 当前时间
+            sm2.df_to_sql(df_x_sql, 'signal_name', factor_name)
             df=self.raw_signal_withdraw(factor_name,df_x)
             if n==1:
                 df_final=df
@@ -152,11 +158,15 @@ class L2_signalConstruction:
 if __name__ == "__main__":
     #'LHBProportion', 'LargeOrder_difference', 'USDX','IndividualStock_Emotion',USBond,'IndividualStock_Emotion','ETF_Shares'
     #['MacroLiquidity', 'IndexPriceVolume', 'SpecialFactor', 'StockCapital', 'MacroEconomy', 'StockFundamentals', 'StockEmotion']
-    # 示例使用
-    signal_name_list =['TargetIndex_Momentum', 'TargetIndex_Technical', 'TermSpread', 'USBond', 'USDX']# 示例信号名称
+    signal_name_list =['BMCI', 'Bank_Momentum', 'Bond', 'CPI', 'CopperGold', 'CreditSpread', 'DBI', 'ETF_Shares',
+                 'EarningsYield_Reverse', 'Future_difference', 'Future_holding', 'Growth', 'IndividualStock_Emotion',
+                 'LHBProportion', 'LargeOrder_difference', 'M1M2', 'Monthly_effect', 'NLBP_difference', 'PCT', 'PMI',
+                 'PPI', 'RRScore_difference', 'RelativeIndex_Std', 'Relative_turnover', 'Shibor',
+                 'TargetIndex_Fundamentals', 'TargetIndex_Momentum', 'TargetIndex_Technical', 'TermSpread', 'USBond',
+                 'USDX']
     mode = "prod"         # 示例模式
     start_date = "2015-01-01"
-    end_date = "2026-01-06"
+    end_date = "2026-01-07"
     cost = 0.00006
     big_indexName = "上证50"
     small_indexName = "中证2000"

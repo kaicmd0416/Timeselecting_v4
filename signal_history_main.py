@@ -33,7 +33,7 @@ if __name__ == "__main__":
     #['NLBP_difference', 'LHBProportion', 'LargeOrder_difference', 'USDX', 'USBond', 'ETF_Shares']
     signal_name='ETF_Shares' #signal_name如果为None默认跑所选的级别因子的全部
     start_date='2015-01-01'
-    end_date='2026-01-06'
+    end_date='2026-01-07'
     signal_type_list=['L3','L2'] #输出需要跑的因子级别
     mode='prod'#除了生产意外其他的都是test
     backtest=False #看要不要回测报告

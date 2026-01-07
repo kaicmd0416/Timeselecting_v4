@@ -297,8 +297,7 @@ class L3factor_backtesting:
             if index >= 500:
                 current_date = date
                 # 使用从开始到当前日期前一个工作日的数据
-                df_window = df.iloc[:index]
-                
+                df_window = df.iloc[:index+1]
                 # 初始化当前日期的结果列表
                 portfolio_results = []
                 
