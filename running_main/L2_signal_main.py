@@ -108,10 +108,10 @@ class L2_signalConstruction:
         inputpath_sql = glv.get('sql_path')
         if self.mode=='prod':
              sm = gt.sqlSaving_main(inputpath_sql, 'L2_signal_prod', delete=True)
-             sm2 = gt.sqlSaving_main(inputpath_sql, 'L3_bext_x_prod', delete=True)
+             sm2 = gt.sqlSaving_main(inputpath_sql, 'L3_bext_x_prod')
         else:
             sm = gt.sqlSaving_main(inputpath_sql, 'L2_signal_test', delete=True)
-            sm2 = gt.sqlSaving_main(inputpath_sql, 'L3_bext_x_test', delete=True)
+            sm2 = gt.sqlSaving_main(inputpath_sql, 'L3_bext_x_test')
         n=1
         df_final=pd.DataFrame()
         factor_name_list = self.get_factor_info(self.signal_name, True)
@@ -123,7 +123,7 @@ class L2_signalConstruction:
             df_x_sql=df_x.copy()
             df_x_sql['signal_name']=factor_name
             df_x_sql['update_time']=datetime.now().replace(tzinfo=None)  # 当前时间
-            sm2.df_to_sql(df_x_sql, 'signal_name', factor_name)
+            sm2.df_to_sql(df_x_sql)
             df=self.raw_signal_withdraw(factor_name,df_x)
             if n==1:
                 df_final=df
