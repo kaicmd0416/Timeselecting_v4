@@ -584,6 +584,134 @@ class data_prepare:
         self._check_working_days_completeness(df1, 'raw_PMI_withdraw')
         return df1
 
+    def raw_PS_withdraw(self):
+        """
+        获取PMI（采购经理人指数）数据
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - PMI: PMI指数值
+        """
+        inputpath = 'D:\Data_prepared_new\PS.xlsx'
+        df1 = pd.read_excel(inputpath)
+        df1.rename(columns={'日期':'valuation_date'},inplace=True)
+        df1['valuation_date'] = pd.to_datetime(df1['valuation_date'])
+        df1['valuation_date'] = df1['valuation_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
+        df1 = df1[df1['valuation_date'].isin(self.working_days_list)]
+        df1['value']=df1['上证50']-df1['中证1000']
+        df1=df1[['valuation_date','value']]
+        # 检查工作日完整性
+        #self._check_working_days_completeness(df1, 'raw_PMI_withdraw')
+        return df1
+    def raw_PCF_withdraw(self):
+        """
+        获取PMI（采购经理人指数）数据
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - PMI: PMI指数值
+        """
+        inputpath = 'D:\Data_prepared_new\PCF.xlsx'
+        df1 = pd.read_excel(inputpath)
+        df1.rename(columns={'日期':'valuation_date'},inplace=True)
+        df1['valuation_date'] = pd.to_datetime(df1['valuation_date'])
+        df1['valuation_date'] = df1['valuation_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
+        df1 = df1[df1['valuation_date'].isin(self.working_days_list)]
+        # 如果中证2000列存在，用中证1000填充其None值
+        if '中证2000' in df1.columns and '中证1000' in df1.columns:
+            df1['中证2000'] = df1['中证2000'].fillna(df1['中证1000'])
+        df1['value']=df1['上证50']-df1['中证2000']
+        df1=df1[['valuation_date','value']]
+        # 检查工作日完整性
+        #self._check_working_days_completeness(df1, 'raw_PMI_withdraw')
+        return df1
+    def raw_Earning_withdraw(self):
+        """
+        获取PMI（采购经理人指数）数据
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - PMI: PMI指数值
+        """
+        inputpath = 'D:\Data_prepared_new\\Earning.xlsx'
+        df1 = pd.read_excel(inputpath)
+        df1.rename(columns={'日期':'valuation_date'},inplace=True)
+        df1['valuation_date'] = pd.to_datetime(df1['valuation_date'])
+        df1['valuation_date'] = df1['valuation_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
+        df1 = df1[df1['valuation_date'].isin(self.working_days_list)]
+        # 如果中证2000列存在，用中证1000填充其None值
+        if '中证2000' in df1.columns and '中证1000' in df1.columns:
+            df1['中证2000'] = df1['中证2000'].fillna(df1['中证1000'])
+        df1['big']=(df1['上证50']+df1['沪深300'])/2
+        df1['small']=(df1['中证1000']+df1['中证2000'])/2
+        df1['value']=df1['big']-df1['small']
+        df1=df1[['valuation_date','value']]
+        # 检查工作日完整性
+        #self._check_working_days_completeness(df1, 'raw_PMI_withdraw')
+        return df1
+    def raw_NetProfit_withdraw(self):
+        """
+        获取PMI（采购经理人指数）数据
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - PMI: PMI指数值
+        """
+        inputpath = 'D:\Data_prepared_new\\NetProfit.xlsx'
+        df1 = pd.read_excel(inputpath)
+        df1.rename(columns={'日期':'valuation_date'},inplace=True)
+        df1['valuation_date'] = pd.to_datetime(df1['valuation_date'])
+        df1['valuation_date'] = df1['valuation_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
+        df1 = df1[df1['valuation_date'].isin(self.working_days_list)]
+        # 如果中证2000列存在，用中证1000填充其None值
+        if '中证2000' in df1.columns and '中证1000' in df1.columns:
+            df1['中证2000'] = df1['中证2000'].fillna(df1['中证1000'])
+        df1['big']=(df1['上证50']+df1['沪深300'])/2
+        df1['small']=(df1['中证1000']+df1['中证2000'])/2
+        df1['value']=df1['big']-df1['small']
+        df1=df1[['valuation_date','value']]
+        # 检查工作日完整性
+        #self._check_working_days_completeness(df1, 'raw_PMI_withdraw')
+        return df1
+    def raw_ROE_withdraw(self):
+        """
+        获取PMI（采购经理人指数）数据
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - PMI: PMI指数值
+        """
+        inputpath = 'D:\Data_prepared_new\\ROE.xlsx'
+        df1 = pd.read_excel(inputpath)
+        df1.rename(columns={'日期':'valuation_date'},inplace=True)
+        df1['valuation_date'] = pd.to_datetime(df1['valuation_date'])
+        df1['valuation_date'] = df1['valuation_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
+        df1 = df1[df1['valuation_date'].isin(self.working_days_list)]
+        # 如果中证2000列存在，用中证1000填充其None值
+        if '中证2000' in df1.columns and '中证1000' in df1.columns:
+            df1['中证2000'] = df1['中证2000'].fillna(df1['中证1000'])
+        df1['big']=(df1['上证50']+df1['沪深300'])/2
+        df1['small']=(df1['中证1000']+df1['中证2000'])/2
+        df1['value']=df1['big']-df1['small']
+        df1=df1[['valuation_date','value']]
+        # 检查工作日完整性
+        #self._check_working_days_completeness(df1, 'raw_PMI_withdraw')
+        return df1
     def raw_socialfinance(self):
         """
         获取CPI（居民消费价格指数）数据
@@ -1439,12 +1567,12 @@ class data_prepare:
         return df
 if __name__ == "__main__":
     dp=data_prepare('2015-01-03','2026-01-05')
-    df=dp.raw_usbond('3Y')
-    # df2=dp.target_index()
-    # df2=df2[['valuation_date','target_index']]
-    # df=df.merge(df2,on='valuation_date',how='left')
-    # #df=df[['valuation_date','target_index']]
-    # df.set_index('valuation_date',inplace=True,drop=True)
-    # df=(df-df.min())/(df.max()-df.min())
-    # df.plot()
-    # plt.show()
+    df=dp.raw_Earning_withdraw()
+    df2=dp.target_index()
+    df2=df2[['valuation_date','target_index']]
+    df=df.merge(df2,on='valuation_date',how='left')
+    #df=df[['valuation_date','target_index']]
+    df.set_index('valuation_date',inplace=True,drop=True)
+    df=(df-df.min())/(df.max()-df.min())
+    df.plot()
+    plt.show()

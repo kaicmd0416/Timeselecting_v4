@@ -24,6 +24,21 @@ L3_bext_x_prod:
       signal_name: { type: String, length: 50 }
       x: { type: Float }
       update_time: { type: String, length: 50 }
+L3_signal_test:
+    table_name: "timeselecting_l3_test"
+    db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"
+    chunk_size: 20000
+    workers: 4
+    private_keys:
+      - "valuation_date"
+      - 'signal_name'
+      - 'x'
+    schema:
+      valuation_date: { type: String, length: 50 }
+      signal_name: { type: String, length: 50 }
+      final_signal: { type: Float }
+      x: { type: Float }
+      update_time: { type: String, length: 50 }
 L3_signal_prod:
     table_name: "timeselecting_l3_prod"
     db_url: "mysql+pymysql://kai:Abcd1234#@rm-bp1o6we7s3o1h76x1to.mysql.rds.aliyuncs.com:3306/signal_v4?autocommit=True"

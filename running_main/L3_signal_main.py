@@ -281,6 +281,21 @@ class L3_signalConstruction:
         elif self.signal_name=='Index_PE':
             df=self.dpro.index_PE()
             sc_mode='mode_8'
+        elif self.signal_name=='Index_PS':
+            df=self.dp.raw_PS_withdraw()
+            sc_mode='mode_8'
+        elif self.signal_name=='Index_PCF':
+            df=self.dp.raw_PCF_withdraw()
+            sc_mode='mode_8'
+        elif self.signal_name == 'Index_Earning':
+            df = self.dp.raw_Earning_withdraw()
+            sc_mode = 'mode_8'
+        elif self.signal_name == 'Index_NetProfit':
+            df = self.dp.raw_NetProfit_withdraw()
+            sc_mode = 'mode_8'
+        elif self.signal_name == 'Index_ROE':
+            df = self.dp.raw_ROE_withdraw()
+            sc_mode = 'mode_8'
         elif self.signal_name=='Index_PB':
             df=self.dpro.index_PB()
             sc_mode='mode_8'
@@ -402,36 +417,11 @@ class L3_signalConstruction:
 
 if __name__ == "__main__":
 
-    # # mode_1, mode_2, mode_3, mode_4 对应的signal_name列表
-    # mode_1_4_signal_names=['Shibor_2W', 'Shibor_9M', 'Bond_3Y', 'Bond_10Y', 'CreditSpread_3M',
-    #     'CreditSpread_9M', 'CreditSpread_5Y', 'USStock',# mode_1 (正向direction)
-    #         'RRScore_difference',
-    #         'Bank_Momentum',
-    #         # mode_2 (反向direction)
-    #         'USDX', 'TermSpread_9Y', 'EarningsYield_Reverse', 'LHBProportion',
-    #         'NLBP_difference','Future_difference',
-    #         # mode_3 (月度因子专用)
-    #         'CPI', 'PPI',
-    #         # mode_4 (月度反向因子专用)
-    #         'PMI','RaisingTrend_proportion']
     # 其他mode (不等于1,2,3,4) 对应的signal_name列表
-    other_mode_signal_names = ['CPI'
-
-        # # mode_8 (大单因子专用)
-        # 'LargeOrder_difference',
-        # # mode_9 (月度效应专用)
-        # 'Monthly_effect',
-        # # mode_12 (stock_HL专用)
-        # 'Stock_HL', 'Rsi_difference',
-        # # mode_13 (技术指标专用)
-        # 'TargetIndex_MACD', 'TargetIndex_BBANDS',
-        # 'TargetIndex_KDJ', 'TargetIndex_PSA',
-        # 'TargetIndex_REVERSE','TargetIndex_MOMENTUM'
+    other_mode_signal_names = ['Index_Earning','Index_NetProfit','Index_ROE'
     ]
-    mode_1_4_signal_names =[
-        'TargetIndex_MOMENTUM2']
     for signal_name in other_mode_signal_names:
-        ssm=L3_signalConstruction(signal_name=signal_name,mode='test',start_date='2015-01-01',end_date='2025-01-06')
+        ssm=L3_signalConstruction(signal_name=signal_name,mode='test',start_date='2015-01-01',end_date='2026-01-07')
         ssm.signal_main()
     # for signal_name in other_mode_signal_names:
     #     ssm=single_signal_main(signal_name=signal_name,mode='test',start_date='2015-01-01',end_date='2025-09-27')

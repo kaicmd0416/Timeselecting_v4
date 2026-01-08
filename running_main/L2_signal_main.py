@@ -158,13 +158,9 @@ class L2_signalConstruction:
 if __name__ == "__main__":
     #'LHBProportion', 'LargeOrder_difference', 'USDX','IndividualStock_Emotion',USBond,'IndividualStock_Emotion','ETF_Shares'
     #['MacroLiquidity', 'IndexPriceVolume', 'SpecialFactor', 'StockCapital', 'MacroEconomy', 'StockFundamentals', 'StockEmotion']
-    signal_name_list =['BMCI', 'Bank_Momentum', 'Bond', 'CPI', 'CopperGold', 'CreditSpread', 'DBI', 'ETF_Shares',
-                 'EarningsYield_Reverse', 'Future_difference', 'Future_holding', 'Growth', 'IndividualStock_Emotion',
-                 'LHBProportion', 'LargeOrder_difference', 'M1M2', 'Monthly_effect', 'NLBP_difference', 'PCT', 'PMI',
-                 'PPI', 'RRScore_difference', 'RelativeIndex_Std', 'Relative_turnover', 'Shibor',
-                 'TargetIndex_Fundamentals', 'TargetIndex_Momentum', 'TargetIndex_Technical', 'TermSpread', 'USBond',
-                 'USDX']
-    mode = "prod"         # 示例模式
+    signal_name_list =['Index_Earning','Index_NetProfit','Index_ROE'
+    ]
+    mode = "test"         # 示例模式
     start_date = "2015-01-01"
     end_date = "2026-01-07"
     cost = 0.00006
