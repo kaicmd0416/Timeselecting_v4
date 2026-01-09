@@ -153,6 +153,6 @@ def signalMatrix_saving_split(start_date, end_date,signal_name,signal_level,mode
     #df.to_excel(outputpath)
 if __name__ == "__main__":
     #signal_backtesting_main('2016-01-01', '2025-12-31','prod', big_indexName='上证50', small_indexName='中证2000')
-    signalMatrix_saving('2025-01-01', '2025-12-31','L1','prod')
+    signal_backtesting_main('2016-01-01', '2026-01-08','prod',big_indexName='上证50',small_indexName='中证2000')
     #signalMatrix_saving_split('2024-12-31', '2025-11-31','StockEmotion', 'L2', 'prod')
     #signal_backtesting_main('2016-01-01', '2025-12-01','prod')

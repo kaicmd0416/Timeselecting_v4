@@ -85,34 +85,34 @@ def update_main():
                                        '上证50', '中证2000', 0.15, 0.15)
         scm.running_main()
         results3, status3 = signal_checker.check_l0_signals()
-    #     if status3 == 'normal':
-    #         pu = portfolio_updating(target_date)
-    #         #pu.portfolio_saving_main()
-    #     else:
-    #         print('L0因子更新存在错误')
-    #         raise ValueError
-    #     results4, status4 = portfolio_checker.check_all_portfolios()
-    #     if status4 == 'error':
-    #         print('Portfolio更新存在错误')
-    #         raise ValueError
-    #     else:
-    #         # 计算start_date：target_date往回推5个工作日
-    #         # 从target_date往前推，找到5个工作日前的日期
-    #         current_date = pd.to_datetime(target_date)
-    #         working_days_count = 0
-    #         days_back = 0
-    #
-    #         while working_days_count < 5:
-    #             days_back += 1
-    #             check_date = current_date - pd.DateOffset(days=days_back)
-    #             check_date_str = check_date.strftime('%Y-%m-%d')
-    #             if gt.is_workday(check_date_str):
-    #                 working_days_count += 1
-    #                 if working_days_count == 5:
-    #                     start_date = check_date_str
-    #                     break
-    #         end_date = gt.last_workday_calculate(target_date)
-    #         signal_backtesting_main(start_date, end_date, 'prod', big_indexName='上证50', small_indexName='中证2000')
+        if status3 == 'normal':
+            pu = portfolio_updating(target_date)
+            #pu.portfolio_saving_main()
+        else:
+            print('L0因子更新存在错误')
+            raise ValueError
+        results4, status4 = portfolio_checker.check_all_portfolios()
+        if status4 == 'error':
+            print('Portfolio更新存在错误')
+            raise ValueError
+        else:
+            # 计算start_date：target_date往回推5个工作日
+            # 从target_date往前推，找到5个工作日前的日期
+            current_date = pd.to_datetime(target_date)
+            working_days_count = 0
+            days_back = 0
+
+            while working_days_count < 5:
+                days_back += 1
+                check_date = current_date - pd.DateOffset(days=days_back)
+                check_date_str = check_date.strftime('%Y-%m-%d')
+                if gt.is_workday(check_date_str):
+                    working_days_count += 1
+                    if working_days_count == 5:
+                        start_date = check_date_str
+                        break
+            end_date = gt.last_workday_calculate(target_date)
+            signal_backtesting_main(start_date, end_date, 'prod', big_indexName='上证50', small_indexName='中证2000')
     else:
         print('L1,L2,L3因子更新存在错误')
         raise ValueError
