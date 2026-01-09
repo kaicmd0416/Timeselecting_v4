@@ -158,7 +158,7 @@ class L2_signalConstruction:
 if __name__ == "__main__":
     #'LHBProportion', 'LargeOrder_difference', 'USDX','IndividualStock_Emotion',USBond,'IndividualStock_Emotion','ETF_Shares'
     #['MacroLiquidity', 'IndexPriceVolume', 'SpecialFactor', 'StockCapital', 'MacroEconomy', 'StockFundamentals', 'StockEmotion']
-    signal_name_list =['Index_Earning','Index_NetProfit','Index_ROE'
+    signal_name_list =['Index_NetProfit','Index_PE','Index_PB','Index_PCF','Index_PS','Growth','EarningsYield_Reverse'
     ]
     mode = "test"         # 示例模式
     start_date = "2015-01-01"

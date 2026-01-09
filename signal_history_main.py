@@ -31,17 +31,16 @@ def update_main(signal_name,start_date,end_date,signal_type_list,mode,backtest,b
             pu.portfolio_saving_main()
 if __name__ == "__main__":
     #['NLBP_difference', 'LHBProportion', 'LargeOrder_difference', 'USDX', 'USBond', 'ETF_Shares']
-    signal_name='ETF_Shares' #signal_name如果为None默认跑所选的级别因子的全部
+    signal_name='StockFundamentals' #signal_name如果为None默认跑所选的级别因子的全部
     start_date='2015-01-01'
-    end_date='2026-01-07'
-    signal_type_list=['L3','L2'] #输出需要跑的因子级别
-    mode='prod'#除了生产意外其他的都是test
-    backtest=False #看要不要回测报告
-    auto=False #这个对应的是L2因子的自动调参，默认为False
+    end_date='2026-01-08'
+    signal_type_list=['L3','L2','L1'] #输出需要跑的因子级别
+    mode='test'#除了生产意外其他的都是test
+    backtest=True #看要不要回测报告
     big_indexName='上证50' #所选大盘的指数
     small_indexName='中证2000'#所选小盘的指数
     big_proportion=0.15 #这个对应的是自动调参的时候的大盘指数占比如果auto=False则无关系
     small_proportion=0.15 #这个对应的是自动调参的时候的小盘指数占比如果auto=False则无关系
     portfolio=False#这个是对应要不要存储portfolio到portfolio表里面
-    update_main(signal_name, start_date, end_date, signal_type_list, mode, backtest, auto, big_indexName,
+    update_main(signal_name, start_date, end_date, signal_type_list, mode, backtest,  big_indexName,
                 small_indexName, big_proportion, small_proportion,portfolio)

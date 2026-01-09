@@ -128,3 +128,9 @@ data_prepare_functions:
     name: raw_fund
   - effective_start_date: '2015-01-04'
     name: raw_usbond
+  - effective_start_date: '2015-01-04'
+    name: raw_PS_withdraw
+  - effective_start_date: '2015-01-04'
+    name: raw_PCF_withdraw
+  - effective_start_date: '2021-01-07'
+    name: raw_NetProfit_withdraw

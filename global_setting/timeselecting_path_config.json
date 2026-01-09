@@ -165,6 +165,16 @@
             "sql_sheet": "index_dailybasic"
         },
         {
+            "data_type": "raw_indexbasic_wind",
+            "database": "winddb",
+            "sql_sheet": "index_dailybasic"
+        },
+        {
+            "data_type": "raw_indexpredictbasic",
+            "database": "winddb",
+            "sql_sheet": "index_predictbasic"
+        },
+        {
             "data_type": "raw_intindex",
             "database": "tusharedb",
             "sql_sheet": "index_global"

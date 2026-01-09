@@ -144,11 +144,11 @@ Future_difference:
   L3_factor: Future_difference
 Index_PE:
   L1_factor: StockFundamentals
-  L2_factor: TargetIndex_Fundamentals
+  L2_factor: Index_PE
   L3_factor: Index_PE
 Index_PB:
   L1_factor: StockFundamentals
-  L2_factor: TargetIndex_Fundamentals
+  L2_factor: Index_PB
   L3_factor: Index_PB
 CopperGold:
   L1_factor: MacroEconomy
@@ -171,22 +171,14 @@ ETF_Shares:
   L2_factor: ETF_Shares
   L3_factor: ETF_Shares
 Index_PS:
-  L1_factor: Rubbish
+  L1_factor: StockFundamentals
   L2_factor: Index_PS
   L3_factor: Index_PS
 Index_PCF:
-  L1_factor: Rubbish
+  L1_factor: StockFundamentals
   L2_factor: Index_PCF
   L3_factor: Index_PCF
-Index_Earning:
-  L1_factor: Rubbish
-  L2_factor: Index_Earning
-  L3_factor: Index_Earning
 Index_NetProfit:
-  L1_factor: Rubbish
+  L1_factor: StockFundamentals
   L2_factor: Index_NetProfit
   L3_factor: Index_NetProfit
-Index_ROE:
-  L1_factor: Rubbish
-  L2_factor: Index_ROE
-  L3_factor: Index_ROE

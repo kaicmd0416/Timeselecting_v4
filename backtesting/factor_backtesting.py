@@ -503,13 +503,13 @@ class L3factor_backtesting:
             return df_output
 
 if __name__ == "__main__":
-    fbm = L3factor_backtesting('TargetIndex_BBANDS', '2026-01-07','2026-01-07', 0.00006, 'prod', '上证50',
-                               '中证2000', 0.15, 0.15)
-    fbm.backtesting_main()
-    # factor_list=['StockEmotion']
-    # for factor_name in factor_list:
-    #     fbm=factor_backtesting(factor_name,'2015-01-01',"2025-12-31",0.00006,'prod','L1','上证50','中证2000',None,None)
-    #     fbm.backtesting_main()
+    # fbm = L3factor_backtesting('TargetIndex_BBANDS', '2026-01-07','2026-01-07', 0.00006, 'prod', '上证50',
+    #                            '中证2000', 0.15, 0.15)
+    # fbm.backtesting_main()
+    factor_list=['StockFundamentals']
+    for factor_name in factor_list:
+        fbm=factor_backtesting(factor_name,'2015-01-01',"2025-12-31",0.00006,'prod','L1','上证50','中证2000',None,None)
+        fbm.backtesting_main()
         # fbm = L3factor_backtesting(factor_name, '2015-01-01', '2025-11-31', 0.00006, 'test', '上证50',
         #                            '中证2000', 0.15, 0.15)
         # fbm.backtesting_main()
