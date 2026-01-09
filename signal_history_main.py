@@ -35,7 +35,7 @@ if __name__ == "__main__":
     start_date='2015-01-01'
     end_date='2026-01-08'
     signal_type_list=['L3','L2','L1'] #输出需要跑的因子级别
-    mode='test'#除了生产意外其他的都是test
+    mode='prod'#除了生产意外其他的都是test
     backtest=True #看要不要回测报告
     big_indexName='上证50' #所选大盘的指数
     small_indexName='中证2000'#所选小盘的指数

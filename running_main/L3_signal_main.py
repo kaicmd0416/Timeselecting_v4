@@ -287,14 +287,8 @@ class L3_signalConstruction:
         elif self.signal_name=='Index_PCF':
             df=self.dp.raw_PCF_withdraw()
             sc_mode='mode_8'
-        elif self.signal_name == 'Index_Earning':
-            df = self.dp.raw_Earning_withdraw()
-            sc_mode = 'mode_8'
         elif self.signal_name == 'Index_NetProfit':
             df = self.dp.raw_NetProfit_withdraw()
-            sc_mode = 'mode_8'
-        elif self.signal_name == 'Index_ROE':
-            df = self.dp.raw_ROE_withdraw()
             sc_mode = 'mode_8'
         elif self.signal_name=='Index_PB':
             df=self.dpro.index_PB()
