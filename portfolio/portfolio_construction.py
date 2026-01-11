@@ -762,7 +762,7 @@ if __name__ == "__main__":
     # df_return=decision_30050(5)
     # analyse(df_return, df_singal)
     # #'2022-07-25'
-    working_days_list=gt.working_days_list('2025-03-10','2025-12-24')
+    working_days_list=gt.working_days_list('2025-06-30','2025-12-24')
     for date in working_days_list:
          print(date)
          pu=portfolio_updating(date)

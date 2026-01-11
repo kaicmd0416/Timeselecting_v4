@@ -87,7 +87,7 @@ def update_main():
         results3, status3 = signal_checker.check_l0_signals()
         if status3 == 'normal':
             pu = portfolio_updating(target_date)
-            #pu.portfolio_saving_main()
+            pu.portfolio_saving_main()
         else:
             print('L0因子更新存在错误')
             raise ValueError
