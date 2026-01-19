@@ -158,12 +158,13 @@ class L2_signalConstruction:
 if __name__ == "__main__":
     #'LHBProportion', 'LargeOrder_difference', 'USDX','IndividualStock_Emotion',USBond,'IndividualStock_Emotion','ETF_Shares'
     #['MacroLiquidity', 'IndexPriceVolume', 'SpecialFactor', 'StockCapital', 'MacroEconomy', 'StockFundamentals', 'StockEmotion']
-    signal_name_list =['ETF_Shares'
+    signal_name_list =['CommodityIndex','CommodityTrading','CommodityRelation'
     ]
     mode = "test"         # 示例模式
     start_date = "2015-01-01"
     end_date = "2026-01-18"
     cost = 0.00006
+
     big_indexName = "上证50"
     small_indexName = "中证2000"
     big_proportion = 0.15

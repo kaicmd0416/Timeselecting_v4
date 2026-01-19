@@ -182,3 +182,33 @@ Index_NetProfit:
   L1_factor: StockFundamentals
   L2_factor: Index_NetProfit
   L3_factor: Index_NetProfit
+TargetIndex_REVERSE2:
+  L1_factor: Rubbish
+  L2_factor: TargetIndex_REVERSE2
+  L3_factor: TargetIndex_REVERSE2
+
+# ======================== 商品期货因子 ========================
+Commodity_Upside:
+  L1_factor: MacroEconomy
+  L2_factor: CommodityIndex
+  L3_factor: Commodity_Upside
+
+Commodity_Downside:
+  L1_factor: MacroEconomy
+  L2_factor: CommodityIndex
+  L3_factor: Commodity_Downside
+
+Commodity_Volume:
+  L1_factor: MacroEconomy
+  L2_factor: CommodityTrading
+  L3_factor: Commodity_Volume
+
+Commodity_PPI_Correl:
+  L1_factor: MacroEconomy
+  L2_factor: CommodityRelation
+  L3_factor: Commodity_PPI_Correl
+
+Commodity_Composite:
+  L1_factor: MacroEconomy
+  L2_factor: CommodityIndex
+  L3_factor: Commodity_Composite

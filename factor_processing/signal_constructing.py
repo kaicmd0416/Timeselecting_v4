@@ -382,6 +382,18 @@ class signal_construct:
                         break
                 if not case2_occurred:
                     final_signal = 0
+        elif signal_name=='TargetIndex_REVERSE2':
+            df['quantile_0.8'] = df['difference'].rolling(500).quantile(0.9)
+            df['quantile_0.2'] = df['difference'].rolling(500).quantile(0.1)
+            difference=df['difference'].tolist()[-1]
+            quantile_08=df['quantile_0.8'].tolist()[-1]
+            quantile_02=df['quantile_0.2'].tolist()[-1]
+            if difference>quantile_08:
+                final_signal=1
+            elif difference<quantile_02:
+                final_signal=0
+            else:
+                final_signal=0.5
         return final_signal
 
 

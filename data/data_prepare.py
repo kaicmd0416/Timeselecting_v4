@@ -1516,9 +1516,9 @@ class data_prepare:
     def raw_rrscore_withdraw(self):
         """
         获取RR评分数据
-        
+
         根据raw_rrscore_info获取的base_score列表，从数据库获取对应的RR评分数据
-        
+
         Returns:
         --------
         pd.DataFrame
@@ -1546,9 +1546,34 @@ class data_prepare:
         # 检查工作日完整性
         self._check_working_days_completeness(df, 'raw_rrscore_withdraw')
         return df
+
+    def raw_futureData_commodity(self):
+        """
+        获取商品期货完整数据（含成交量、持仓量、收盘价）
+
+        用于计算商品期货相关因子，获取主力连续合约（代码以888结尾）的数据
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - code: 期货代码
+            - close: 收盘价
+            - volume: 成交量
+            - open_interest: 持仓量（oi字段）
+        """
+        df = gt.futureData_withdraw(self.start_date, self.end_date, ['close', 'volume', 'oi'], False)
+        df.rename(columns={'oi': 'open_interest'}, inplace=True)
+        # 过滤掉股指期货合约（IH、IF、IC、IM开头），只保留商品期货
+        df = df[~df['code'].str.upper().str.match(r'^(IH|IF|IC|IM)')]
+        df['valuation_date'] = pd.to_datetime(df['valuation_date'])
+        df['valuation_date'] = df['valuation_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
+        df = df[df['valuation_date'].isin(self.working_days_list)]
+        return df
 if __name__ == "__main__":
     dp=data_prepare('2015-01-03','2026-01-18')
-    df=dp.raw_fund2()
+    df=dp.r()
     df2=dp.target_index()
     df2=df2[['valuation_date','target_index']]
     df=df.merge(df2,on='valuation_date',how='left')

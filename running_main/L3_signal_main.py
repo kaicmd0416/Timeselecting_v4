@@ -257,6 +257,9 @@ class L3_signalConstruction:
         elif self.signal_name=='TargetIndex_REVERSE':
             df=self.dpro.TargetIndex_MOMENTUM3()
             sc_mode='mode_6'
+        elif self.signal_name=='TargetIndex_REVERSE2':
+            df=self.dpro.TargetIndex_REVERSE()
+            sc_mode='mode_6'
         elif self.signal_name=='Future_difference':
             df=self.dpro.futureDifference()
             sc_mode='mode_9'
@@ -305,6 +308,22 @@ class L3_signalConstruction:
         elif self.signal_name=='Relative_turnover':
             df=self.dpro.relativeTurnOver()
             sc_mode='mode_1'
+        # ======================== 商品期货因子 ========================
+        elif self.signal_name=='Commodity_Upside':
+            df=self.dpro.commodity_upside()
+            sc_mode='mode_8'  # 正向：上游商品强→大盘占优
+        elif self.signal_name=='Commodity_Downside':
+            df=self.dpro.commodity_downside()
+            sc_mode='mode_9'  # 反向：中下游商品强→小盘占优
+        elif self.signal_name=='Commodity_Volume':
+            df=self.dpro.commodity_volume()
+            sc_mode='mode_9'  # 反向：活跃度高→小盘承压
+        elif self.signal_name=='Commodity_PPI_Correl':
+            df=self.dpro.commodity_ppi_correl()
+            sc_mode='mode_1'  # 正向：联动度高→强化传导逻辑
+        elif self.signal_name=='Commodity_Composite':
+            df=self.dpro.commodity_composite()
+            sc_mode='mode_1'  # 正向：同比上行→大盘占优
         else:
             print('signal_name还没有纳入系统')
             raise ValueError
@@ -414,9 +433,9 @@ class L3_signalConstruction:
 
 if __name__ == "__main__":
 
+    ##,'Commodity_Volume'
     # 其他mode (不等于1,2,3,4) 对应的signal_name列表
-    other_mode_signal_names = ['ETF_Shares'
-    ]
+    other_mode_signal_names = ['Commodity_Upside', 'Commodity_Downside','Commodity_Composite','Commodity_PPI_Correl','Commodity_Volume']
     for signal_name in other_mode_signal_names:
         ssm=L3_signalConstruction(signal_name=signal_name,mode='test',start_date='2015-01-01',end_date='2026-01-18')
         ssm.signal_main()

@@ -1790,17 +1790,506 @@ class data_processing:
         df.dropna(inplace=True)
         return df
 
+    # ======================== 商品期货因子 ========================
+    # 上游品种列表（原油/煤炭/有色/贵金属/黑色）
+    COMMODITY_UPSIDE = [
+        'SC',   # 原油
+        'ZC', 'JM', 'J',  # 煤炭：动力煤、焦煤、焦炭
+        'CU', 'AL', 'ZN', 'PB', 'NI', 'SN',  # 有色：铜、铝、锌、铅、镍、锡
+        'AU', 'AG',  # 贵金属：黄金、白银
+        'RB', 'HC', 'I'  # 黑色：螺纹钢、热轧卷板、铁矿石
+    ]
+
+    # 中下游品种列表（农产品/轻工）
+    COMMODITY_DOWNSIDE = [
+        'A', 'M', 'Y', 'P', 'OI', 'RM', 'CF', 'SR', 'C',  # 农产品
+        'RU', 'FG', 'MA', 'PP', 'L', 'TA'  # 轻工
+    ]
+
+    def _get_commodity_main_contracts(self, df_commodity):
+        """
+        筛选主力连续合约（纯字母代码，如A、CU、RB等）
+
+        Parameters:
+        -----------
+        df_commodity : pd.DataFrame
+            商品期货数据
+
+        Returns:
+        --------
+        pd.DataFrame
+            筛选后的主力连续合约数据，包含symbol列标识品种
+        """
+        if df_commodity.empty:
+            return pd.DataFrame(columns=['valuation_date', 'code', 'close', 'volume', 'open_interest', 'symbol'])
+
+        # 主力连续合约的代码是纯字母（如A、CU、RB），不包含数字
+        # 具体合约代码是字母+数字（如A1201、CU2001）
+        import re
+
+        def is_main_contract(code):
+            """判断是否为主力连续合约（纯字母代码）"""
+            code_str = str(code).strip()
+            # 去掉可能的交易所后缀
+            code_clean = re.sub(r'\.[A-Z]+$', '', code_str)
+            # 纯字母代码为主力连续合约
+            return bool(re.match(r'^[A-Za-z]+$', code_clean))
+
+        df_main = df_commodity[df_commodity['code'].apply(is_main_contract)].copy()
+
+        if df_main.empty:
+            return pd.DataFrame(columns=['valuation_date', 'code', 'close', 'volume', 'open_interest', 'symbol'])
+
+        # symbol就是code本身（转大写）
+        df_main['symbol'] = df_main['code'].str.upper()
+        # 去掉可能的交易所后缀
+        df_main['symbol'] = df_main['symbol'].str.replace(r'\.[A-Z]+$', '', regex=True)
+
+        return df_main
+
+    def _calculate_nanhua_weights(self, df_main, date, symbol_list):
+        """
+        计算南华权重（基于过去一年交易金额，符合南华编制规则）
+
+        南华规则：
+        1. 权重基于流动性（交易金额）计算
+        2. 单品种权重上限25%，下限2%
+        3. 每年6月第一个交易日调整权重
+
+        Parameters:
+        -----------
+        df_main : pd.DataFrame
+            主力连续合约数据
+        date : str
+            计算权重的日期
+        symbol_list : list
+            需要计算权重的品种列表
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含品种和权重的DataFrame
+        """
+        date_dt = pd.to_datetime(date)
+        # 获取过去一年的数据
+        year_start = (date_dt - pd.DateOffset(years=1)).strftime('%Y-%m-%d')
+        df_year = df_main[(df_main['valuation_date'] >= year_start) &
+                          (df_main['valuation_date'] <= date) &
+                          (df_main['symbol'].isin(symbol_list))].copy()
+
+        if df_year.empty:
+            return pd.DataFrame(columns=['symbol', 'weight'])
+
+        # 计算交易金额（流动性指标）
+        df_year['trade_value'] = df_year['volume'] * df_year['close']
+
+        # 按品种汇总年度交易金额
+        df_agg = df_year.groupby('symbol').agg({
+            'trade_value': 'sum'
+        }).reset_index()
+
+        # 计算流动性权重
+        total_trade = df_agg['trade_value'].sum()
+        if total_trade == 0:
+            return pd.DataFrame(columns=['symbol', 'weight'])
+
+        df_agg['weight'] = df_agg['trade_value'] / total_trade
+
+        # 应用南华权重限制规则（品种数>=5时）
+        if len(df_agg) >= 5:
+            # 迭代调整权重，确保满足上下限约束
+            for _ in range(10):  # 最多迭代10次
+                # 上限约束：单品种不超过25%
+                df_agg.loc[df_agg['weight'] > 0.25, 'weight'] = 0.25
+                # 下限约束：单品种不低于2%
+                df_agg.loc[df_agg['weight'] < 0.02, 'weight'] = 0.02
+                # 重新归一化
+                weight_sum = df_agg['weight'].sum()
+                if weight_sum > 0:
+                    df_agg['weight'] = df_agg['weight'] / weight_sum
+                # 检查是否满足约束
+                if df_agg['weight'].max() <= 0.25 and df_agg['weight'].min() >= 0.02:
+                    break
+        else:
+            # 品种数<5时，只归一化，不限制上下限
+            weight_sum = df_agg['weight'].sum()
+            if weight_sum > 0:
+                df_agg['weight'] = df_agg['weight'] / weight_sum
+
+        return df_agg[['symbol', 'weight']]
+
+    def _build_commodity_index(self, df_main, symbol_list):
+        """
+        构建商品指数（符合南华编制规则）
+
+        南华规则：
+        1. 每年6月第一个交易日调整权重
+        2. 权重基于过去一年交易金额计算
+        3. 单品种权重上限25%，下限2%
+        4. 收益率截断±15%防止换月跳空
+
+        Parameters:
+        -----------
+        df_main : pd.DataFrame
+            主力连续合约数据
+        symbol_list : list
+            品种代码列表
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含日期和指数值的DataFrame
+        """
+        if df_main.empty:
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        # 筛选指定品种
+        df_filtered = df_main[df_main['symbol'].isin(symbol_list)].copy()
+
+        if df_filtered.empty:
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        # 按日期和品种排序
+        df_filtered = df_filtered.sort_values(['symbol', 'valuation_date'])
+
+        # 计算每个品种的日收益率
+        df_filtered['return'] = df_filtered.groupby('symbol')['close'].pct_change()
+
+        # 处理异常收益率（主力合约切换可能导致跳空）
+        # 限制单日收益率在 -15% 到 +15% 之间
+        df_filtered['return'] = df_filtered['return'].clip(-0.15, 0.15)
+
+        # 获取所有日期
+        dates = sorted(df_filtered['valuation_date'].unique())
+
+        index_values = []
+        index_value = 1000.0  # 基期指数值1000（符合南华规则）
+        current_weights = None  # 当前使用的权重（t-1时刻的权重）
+        current_weight_year = None  # 当前权重对应的年份
+        pending_weights = None  # 待生效的新权重
+
+        for date in dates:
+            date_dt = pd.to_datetime(date)
+            df_date = df_filtered[df_filtered['valuation_date'] == date].copy()
+
+            # 如果有待生效的权重，在新的一天开始时生效
+            if pending_weights is not None:
+                current_weights = pending_weights
+                pending_weights = None
+
+            # 首次计算时初始化权重
+            if current_weights is None:
+                df_weights = self._calculate_nanhua_weights(df_main, date, symbol_list)
+                if not df_weights.empty:
+                    current_weights = df_weights
+                    current_weight_year = date_dt.year
+
+            # 使用t-1时刻的权重计算当天指数（符合公式 CI_t = CI_{t-1} × Σ[ω_{k,t-1} × I_{k,t}/I_{k,t-1}]）
+            if current_weights is None or current_weights.empty:
+                # 如果无法计算权重，使用等权重
+                df_date_valid = df_date[df_date['return'].notna()]
+                if not df_date_valid.empty:
+                    weighted_return = df_date_valid['return'].mean()
+                else:
+                    weighted_return = 0
+            else:
+                # 合并权重
+                df_date = df_date.merge(current_weights, on='symbol', how='left')
+                df_date['weight'] = df_date['weight'].fillna(0)
+
+                # 计算加权收益率
+                df_date_valid = df_date[(df_date['return'].notna()) & (df_date['weight'] > 0)]
+                if not df_date_valid.empty:
+                    # 重新归一化权重（处理缺失品种）
+                    weight_sum = df_date_valid['weight'].sum()
+                    if weight_sum > 0:
+                        weighted_return = (df_date_valid['return'] * df_date_valid['weight']).sum() / weight_sum
+                    else:
+                        weighted_return = 0
+                else:
+                    weighted_return = 0
+
+            # 更新指数值
+            index_value = index_value * (1 + weighted_return)
+            index_values.append({
+                'valuation_date': date,
+                'value': index_value
+            })
+
+            # 计算完当天指数后，检查是否需要更新权重（每年6月第一个交易日）
+            # 新权重从下一个交易日开始生效
+            if date_dt.month == 6 and current_weight_year != date_dt.year:
+                june_dates = [d for d in dates if d.startswith(f"{date_dt.year}-06")]
+                if june_dates and date == june_dates[0]:
+                    df_weights = self._calculate_nanhua_weights(df_main, date, symbol_list)
+                    if not df_weights.empty:
+                        pending_weights = df_weights
+                        current_weight_year = date_dt.year
+
+        return pd.DataFrame(index_values)
+
+    def commodity_upside(self):
+        """
+        计算上游商品指数（原油/煤炭/有色/贵金属/黑色）
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - value: 上游商品指数值
+        """
+        df_commodity = self.dp.raw_futureData_commodity()
+        if df_commodity.empty:
+            print("警告: commodity_upside - 商品期货数据为空")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        df_main = self._get_commodity_main_contracts(df_commodity)
+        if df_main.empty:
+            print("警告: commodity_upside - 未找到主力连续合约数据")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        df_index = self._build_commodity_index(df_main, self.COMMODITY_UPSIDE)
+        df_index.dropna(inplace=True)
+        return df_index
+
+    def commodity_downside(self):
+        """
+        计算中下游商品指数（农产品/轻工）
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - value: 中下游商品指数值
+        """
+        df_commodity = self.dp.raw_futureData_commodity()
+        if df_commodity.empty:
+            print("警告: commodity_downside - 商品期货数据为空")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        df_main = self._get_commodity_main_contracts(df_commodity)
+        if df_main.empty:
+            print("警告: commodity_downside - 未找到主力连续合约数据")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        df_index = self._build_commodity_index(df_main, self.COMMODITY_DOWNSIDE)
+        df_index.dropna(inplace=True)
+        return df_index
+
+    def commodity_volume(self):
+        """
+        计算期货交易活跃度综合指数变化
+
+        计算逻辑：
+        1. 单品种活跃度 = 0.5×(当日成交量/20日均值) + 0.5×(当日持仓量/20日均值)
+        2. 按南华权重加权得到综合活跃度指数
+        3. 输出周度变化率（5日变化率）
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - value: 活跃度指数5日变化率
+        """
+        df_commodity = self.dp.raw_futureData_commodity()
+        if df_commodity.empty:
+            print("警告: commodity_volume - 商品期货数据为空")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        df_main = self._get_commodity_main_contracts(df_commodity)
+        if df_main.empty:
+            print("警告: commodity_volume - 未找到主力连续合约数据")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        # 获取所有品种
+        all_symbols = self.COMMODITY_UPSIDE + self.COMMODITY_DOWNSIDE
+        df_filtered = df_main[df_main['symbol'].isin(all_symbols)].copy()
+
+        if df_filtered.empty:
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        # 按日期和品种排序
+        df_filtered = df_filtered.sort_values(['symbol', 'valuation_date'])
+
+        # 计算20日均值
+        df_filtered['volume_ma20'] = df_filtered.groupby('symbol')['volume'].transform(
+            lambda x: x.rolling(20, min_periods=1).mean()
+        )
+        df_filtered['oi_ma20'] = df_filtered.groupby('symbol')['open_interest'].transform(
+            lambda x: x.rolling(20, min_periods=1).mean()
+        )
+
+        # 计算单品种活跃度
+        df_filtered['volume_ratio'] = df_filtered['volume'] / df_filtered['volume_ma20']
+        df_filtered['oi_ratio'] = df_filtered['open_interest'] / df_filtered['oi_ma20']
+        df_filtered['activity'] = 0.5 * df_filtered['volume_ratio'] + 0.5 * df_filtered['oi_ratio']
+
+        # 按日期计算加权活跃度（使用年度权重调整，符合南华规则）
+        dates = sorted(df_filtered['valuation_date'].unique())
+        activity_values = []
+        current_weights = None  # 当前使用的权重（t-1时刻的权重）
+        current_weight_year = None  # 当前权重对应的年份
+        pending_weights = None  # 待生效的新权重
+
+        for date in dates:
+            date_dt = pd.to_datetime(date)
+            df_date = df_filtered[df_filtered['valuation_date'] == date].copy()
+
+            # 如果有待生效的权重，在新的一天开始时生效
+            if pending_weights is not None:
+                current_weights = pending_weights
+                pending_weights = None
+
+            # 首次计算时初始化权重
+            if current_weights is None:
+                df_weights = self._calculate_nanhua_weights(df_main, date, all_symbols)
+                if not df_weights.empty:
+                    current_weights = df_weights
+                    current_weight_year = date_dt.year
+
+            # 使用t-1时刻的权重计算当天活跃度
+            if current_weights is None or current_weights.empty:
+                # 等权重
+                df_date_valid = df_date[df_date['activity'].notna()]
+                if not df_date_valid.empty:
+                    weighted_activity = df_date_valid['activity'].mean()
+                else:
+                    weighted_activity = np.nan
+            else:
+                df_date = df_date.merge(current_weights, on='symbol', how='left')
+                df_date['weight'] = df_date['weight'].fillna(0)
+
+                df_date_valid = df_date[(df_date['activity'].notna()) & (df_date['weight'] > 0)]
+                if not df_date_valid.empty:
+                    weight_sum = df_date_valid['weight'].sum()
+                    if weight_sum > 0:
+                        weighted_activity = (df_date_valid['activity'] * df_date_valid['weight']).sum() / weight_sum
+                    else:
+                        weighted_activity = np.nan
+                else:
+                    weighted_activity = np.nan
+
+            activity_values.append({
+                'valuation_date': date,
+                'activity': weighted_activity
+            })
+
+            # 计算完当天后，检查是否需要更新权重（每年6月第一个交易日）
+            if date_dt.month == 6 and current_weight_year != date_dt.year:
+                june_dates = [d for d in dates if d.startswith(f"{date_dt.year}-06")]
+                if june_dates and date == june_dates[0]:
+                    df_weights = self._calculate_nanhua_weights(df_main, date, all_symbols)
+                    if not df_weights.empty:
+                        pending_weights = df_weights
+                        current_weight_year = date_dt.year
+
+        df_result = pd.DataFrame(activity_values)
+
+        # 计算5日变化率
+        df_result['value'] = df_result['activity']
+        df_result = df_result[['valuation_date', 'value']]
+        df_result.dropna(inplace=True)
+
+        return df_result
+
+    def commodity_ppi_correl(self):
+        """
+        计算商品综合指数与PPI的20日滚动相关性
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - value: 商品指数与PPI的20日滚动相关性
+        """
+        df_commodity = self.dp.raw_futureData_commodity()
+        if df_commodity.empty:
+            print("警告: commodity_ppi_correl - 商品期货数据为空")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        df_main = self._get_commodity_main_contracts(df_commodity)
+        if df_main.empty:
+            print("警告: commodity_ppi_correl - 未找到主力连续合约数据")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        # 构建全品种商品综合指数
+        all_symbols = self.COMMODITY_UPSIDE + self.COMMODITY_DOWNSIDE
+        df_index = self._build_commodity_index(df_main, all_symbols)
+
+        if df_index.empty:
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        # 获取PPI数据
+        df_ppi = self.dp.raw_PPI_withdraw()
+
+        # 合并数据
+        df_merged = df_index.merge(df_ppi, on='valuation_date', how='left')
+
+        # PPI为月度数据，需要前向填充
+        df_merged['PPI'] = df_merged['PPI'].fillna(method='ffill')
+
+        # 计算商品指数的日收益率
+        df_merged = df_merged.sort_values('valuation_date')
+        df_merged['index_return'] = df_merged['value'].pct_change()
+
+        # 计算PPI的变化率（用差分近似）
+        df_merged['ppi_change'] = df_merged['PPI'].diff()
+
+        # 计算20日滚动相关性
+        df_merged['correlation'] = df_merged['index_return'].rolling(20).corr(df_merged['ppi_change'])
+
+        df_result = df_merged[['valuation_date', 'correlation']].copy()
+        df_result.columns = ['valuation_date', 'value']
+        df_result.dropna(inplace=True)
+
+        return df_result
+
+    def commodity_composite(self):
+        """
+        计算南华商品综合指数
+
+        使用全部30个商品期货品种（上游+中下游）构建综合指数
+
+        信号逻辑：指数上行 = 大盘占优，下行 = 小盘占优 (mode_1)
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含 valuation_date 和 value（指数值）的 DataFrame
+        """
+        df_commodity = self.dp.raw_futureData_commodity()
+
+        if df_commodity.empty:
+            print("警告: commodity_composite - 未获取到期货数据")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        df_main = self._get_commodity_main_contracts(df_commodity)
+        if df_main.empty:
+            print("警告: commodity_composite - 未找到主力连续合约数据")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        # 构建全品种商品综合指数
+        all_symbols = self.COMMODITY_UPSIDE + self.COMMODITY_DOWNSIDE
+        df_index = self._build_commodity_index(df_main, all_symbols)
+
+        df_index.dropna(inplace=True)
+        return df_index
 
 
 if __name__ == "__main__":
-    #dp = data_prepare('2015-01-03', '2025-12-29')
-    #df2 = dp.target_index()
+    dp = data_prepare('2015-01-03', '2025-12-29')
+    df2 = dp.target_index()
+    df2 = df2[['valuation_date', 'target_index']]
     dpro=data_processing('2015-01-03', '2025-01-15')
-    df=dpro.TargetIndex_REVERSE()
-
-    #@df = df.merge(df2, on='valuation_date', how='left')
+    df=dpro.commodity_composite()
+    print(df)
+    df = df.merge(df2, on='valuation_date', how='left')
     #df = df[['valuation_date', 'difference', 'target_index']]
     df.set_index('valuation_date', inplace=True, drop=True)
-    #df = (df - df.min()) / (df.max() - df.min())
+    df = (df - df.min()) / (df.max() - df.min())
     df.plot()
     plt.show()
