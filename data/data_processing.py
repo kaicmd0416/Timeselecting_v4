@@ -1754,16 +1754,53 @@ class data_processing:
         df = df.merge(df_vix, on='valuation_date', how='left')
         return df
 
+    def TargetIndex_REVERSE(self):
+        """
+        计算目标指数动量3（过去10天涨跌幅累乘）
+
+        计算沪深300和国证2000过去10天的涨跌幅累乘，然后计算它们的差值，
+        最后与VIX数据合并
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - difference: 动量差值（沪深300 - 国证2000）
+            - hs300: 沪深300的VIX值
+            - zz1000: 中证1000的VIX值
+        """
+        """
+        计算过去20天的涨跌幅累乘
+
+        Returns:
+            DataFrame: 包含日期和过去20天涨跌幅累乘的结果
+        """
+        df = self.dp.index_return_withdraw2()
+        df.set_index('valuation_date', inplace=True)
+
+        # 对每一列分别计算20天涨跌幅累乘
+        for col in df.columns:
+            df[col] = df[col].rolling(5).apply(lambda x: (1 + x).prod() - 1)
+
+        # 重置索引
+        df.reset_index(inplace=True)
+        df['difference'] = df['上证50'] - df['中证2000']
+        df = df[['valuation_date', 'difference']]
+        df.dropna(inplace=True)
+        return df
+
 
 
 if __name__ == "__main__":
-    dp = data_prepare('2015-01-03', '2025-12-29')
-    df2 = dp.target_index()
-    dpro=data_processing('2015-01-03', '2025-12-29')
-    df=dpro.LargeOrder_difference()
-    df = df.merge(df2, on='valuation_date', how='left')
-    df = df[['valuation_date', 'LargeOrder_difference', 'target_index']]
+    #dp = data_prepare('2015-01-03', '2025-12-29')
+    #df2 = dp.target_index()
+    dpro=data_processing('2015-01-03', '2025-01-15')
+    df=dpro.TargetIndex_REVERSE()
+
+    #@df = df.merge(df2, on='valuation_date', how='left')
+    #df = df[['valuation_date', 'difference', 'target_index']]
     df.set_index('valuation_date', inplace=True, drop=True)
-    df = (df - df.min()) / (df.max() - df.min())
+    #df = (df - df.min()) / (df.max() - df.min())
     df.plot()
     plt.show()

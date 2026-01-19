@@ -659,6 +659,40 @@ class data_prepare:
         # 检查工作日完整性
         self._check_working_days_completeness(df1, 'raw_NetProfit_withdraw')
         return df1
+    def raw_IPO(self):
+        """
+        获取PMI（采购经理人指数）数据
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - PMI: PMI指数值
+        """
+        inputpath = 'D:\Data_prepared_new\沪深股市_首发A股筹资金额_当月值.csv'
+        df1 = gt.readcsv(inputpath)
+        df1.rename(columns={'日期': 'valuation_date'}, inplace=True)
+        working_days_list=gt.working_days_list(self.start_date,self.end_date)
+        df_date=pd.DataFrame()
+        df_date['valuation_date']=working_days_list
+        df1.rename(columns={'M0024245': 'value'}, inplace=True)
+        df1['valuation_date'] = pd.to_datetime(df1['valuation_date'])
+        df1['valuation_date'] = df1['valuation_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
+        df_date=df_date.merge(df1,on='valuation_date',how='left')
+        df_date.fillna(method='ffill',inplace=True)
+        # df_date[['G0009173','G0009174']]=df_date[['G0009173','G0009174']].shift(15)
+        # df_date['value']=df_date['G0009173']+df_date['G0009174']
+
+        df_date=df_date[['valuation_date','value']]
+        df_date.dropna(inplace=True)
+        return df_date
+        #df1 = df1[df1['valuation_date'].isin(self.working_days_list)]
+        # df1['value']=(df1['000016.SH']+df1['000300.SH'])/2
+        # df1=df1[['valuation_date','value']]
+        # # 检查工作日完整性
+        # self._check_working_days_completeness(df1, 'raw_NetProfit_withdraw')
+        # return df1
     def raw_socialfinance(self):
         """
         获取CPI（居民消费价格指数）数据
@@ -778,18 +812,18 @@ class data_prepare:
         self._check_working_days_completeness(df, 'raw_usbond')
         return df
     def raw_fund(self):
-        hs300_sz50_etf_codes_full =  [
-    # 沪深300（规模/流动性双第一梯队）
-    '510300.SH', '510310.SH',
-    # 上证50（规模/流动性双第一梯队）
-    '510050.SH', '510850.SH'
-]
+        hs300_sz50_etf_codes_full = [
+            # 沪深300（规模/流动性双第一梯队）
+            '510300.SH', '510310.SH',
+            # 上证50（规模/流动性双第一梯队）
+            '510050.SH', '510850.SH'
+        ]
         zz1000_zz2000_etf_codes_full = [
-    # 中证1000（规模/流动性双第一梯队）
-    '159845.SZ', '512100.SH',
-    # 中证2000（规模/流动性双第一梯队）
-    '563300.SH', '159531.SZ'
-]
+            # 中证1000（规模/流动性双第一梯队）
+            '159845.SZ', '512100.SH',
+            # 中证2000（规模/流动性双第一梯队）
+            '563300.SH', '159531.SZ'
+        ]
         zz500_zz1000_etf_codes_full = [
             # 中证1000（规模/流动性双第一梯队）
             '159845.SZ', '512100.SH',
@@ -1513,13 +1547,12 @@ class data_prepare:
         self._check_working_days_completeness(df, 'raw_rrscore_withdraw')
         return df
 if __name__ == "__main__":
-    dp=data_prepare('2015-01-03','2026-01-08')
-    df=dp.raw_NetProfit_withdraw()
-    # df2=dp.target_index()
-    # df2=df2[['valuation_date','target_index']]
-    # df=df.merge(df2,on='valuation_date',how='left')
-    # #df=df[['valuation_date','target_index']]
-    # df.set_index('valuation_date',inplace=True,drop=True)
-    # df=(df-df.min())/(df.max()-df.min())
-    # df.plot()
-    # plt.show()
+    dp=data_prepare('2015-01-03','2026-01-18')
+    df=dp.raw_fund2()
+    df2=dp.target_index()
+    df2=df2[['valuation_date','target_index']]
+    df=df.merge(df2,on='valuation_date',how='left')
+    df.set_index('valuation_date',inplace=True,drop=True)
+    df=(df-df.min())/(df.max()-df.min())
+    df.plot()
+    plt.show()

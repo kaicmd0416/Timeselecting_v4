@@ -293,6 +293,9 @@ class L3_signalConstruction:
         elif self.signal_name=='Index_PB':
             df=self.dpro.index_PB()
             sc_mode='mode_8'
+        elif self.signal_name=='IPO':
+            df=self.dp.raw_IPO()
+            sc_mode='mode_10'
         elif self.signal_name=='RRScore_difference':
             df=self.dpro.rrscoreDifference()
             sc_mode='mode_1'
@@ -412,10 +415,10 @@ class L3_signalConstruction:
 if __name__ == "__main__":
 
     # 其他mode (不等于1,2,3,4) 对应的signal_name列表
-    other_mode_signal_names = ['Index_Earning','Index_NetProfit','Index_ROE'
+    other_mode_signal_names = ['ETF_Shares'
     ]
     for signal_name in other_mode_signal_names:
-        ssm=L3_signalConstruction(signal_name=signal_name,mode='test',start_date='2015-01-01',end_date='2026-01-07')
+        ssm=L3_signalConstruction(signal_name=signal_name,mode='test',start_date='2015-01-01',end_date='2026-01-18')
         ssm.signal_main()
     # for signal_name in other_mode_signal_names:
     #     ssm=single_signal_main(signal_name=signal_name,mode='test',start_date='2015-01-01',end_date='2025-09-27')
