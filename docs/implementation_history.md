@@ -303,3 +303,49 @@ if __name__ == "__main__":
 ---
 *记录时间：2026-01-20*
 *Claude Opus 4.5*
+
+---
+
+## 2026-01-21 商品期货因子独立为L1因子
+
+### 变更概述
+将5个商品期货因子从`MacroEconomy`独立出来，新建`Commodity`作为独立的L1因子分类。
+
+### 变更理由
+1. **数据源独立**：商品期货数据来自期货市场，与宏观经济指标数据源不同
+2. **经济逻辑独特**：商品价格反映实体供需，有独特的产业链逻辑
+3. **体量足够**：5个因子已形成完整体系
+4. **扩展空间大**：便于后续扩展（期限结构、跨品种价差、库存数据等）
+5. **组合管理更清晰**：独立L1因子便于风险归因和因子贡献分析
+
+### 修改文件
+- `config_project/signal_dictionary.yaml`：5个Commodity因子的L1_factor从`MacroEconomy`改为`Commodity`
+
+### 现有L1因子分类（共9个）
+
+| L1因子 | 说明 |
+|--------|------|
+| MacroLiquidity | 宏观流动性 |
+| MacroEconomy | 宏观经济 |
+| IndexPriceVolume | 指数价量 |
+| StockCapital | 股票资金 |
+| StockFundamentals | 股票基本面 |
+| StockEmotion | 股票情绪 |
+| SpecialFactor | 特殊因子 |
+| **Commodity** | **商品期货（新增）** |
+| Rubbish | 弃用因子 |
+
+### Commodity因子列表
+
+| L3因子 | L2因子 | 说明 |
+|--------|--------|------|
+| Commodity_Upside | CommodityIndex | 上游商品指数 |
+| Commodity_Downside | CommodityIndex | 中下游商品指数 |
+| Commodity_Composite | CommodityIndex | 综合商品指数 |
+| Commodity_Volume | CommodityTrading | 期货交易活跃度 |
+| Commodity_PPI_Correl | CommodityRelation | 商品指数与PPI相关性 |
+| CopperGold | CopperGold | 铜金比（从MacroEconomy迁移） |
+
+---
+*记录时间：2026-01-21*
+*Claude Opus 4.5*

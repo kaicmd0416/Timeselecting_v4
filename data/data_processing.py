@@ -2080,55 +2080,65 @@ class data_processing:
 
     def commodity_volume(self):
         """
-        计算期货交易活跃度综合指数变化
+        计算期货交易活跃度综合指数
 
         计算逻辑：
-        1. 单品种活跃度 = 0.5×(当日成交量/20日均值) + 0.5×(当日持仓量/20日均值)
-        2. 按南华权重加权得到综合活跃度指数
-        3. 输出周度变化率（5日变化率）
+        1. 对每个品种，计算当日所有月份合约的成交量和持仓量平均值
+        2. 单品种活跃度 = 0.5×当日成交量均值 + 0.5×当日持仓量均值
+        3. 按南华权重加权得到综合活跃度指数
 
         Returns:
         --------
         pd.DataFrame
             包含以下列的DataFrame：
             - valuation_date: 日期，格式为 'YYYY-MM-DD'
-            - value: 活跃度指数5日变化率
+            - value: 活跃度指数
         """
+        import re
+
         df_commodity = self.dp.raw_futureData_commodity()
         if df_commodity.empty:
             print("警告: commodity_volume - 商品期货数据为空")
             return pd.DataFrame(columns=['valuation_date', 'value'])
 
-        df_main = self._get_commodity_main_contracts(df_commodity)
-        if df_main.empty:
-            print("警告: commodity_volume - 未找到主力连续合约数据")
-            return pd.DataFrame(columns=['valuation_date', 'value'])
+        # 从合约代码中提取品种代码（去掉数字部分）
+        def extract_symbol(code):
+            """从合约代码中提取品种代码，如 'CU2501' -> 'CU', 'A1201' -> 'A'"""
+            code_str = str(code).strip().upper()
+            # 去掉可能的交易所后缀
+            code_clean = re.sub(r'\.[A-Z]+$', '', code_str)
+            # 提取字母部分作为品种代码
+            match = re.match(r'^([A-Za-z]+)', code_clean)
+            return match.group(1).upper() if match else None
+
+        df_commodity = df_commodity.copy()
+        df_commodity['symbol'] = df_commodity['code'].apply(extract_symbol)
+
+        # 过滤掉无法识别品种的数据
+        df_commodity = df_commodity[df_commodity['symbol'].notna()]
 
         # 获取所有品种
         all_symbols = self.COMMODITY_UPSIDE + self.COMMODITY_DOWNSIDE
-        df_filtered = df_main[df_main['symbol'].isin(all_symbols)].copy()
+        df_filtered = df_commodity[df_commodity['symbol'].isin(all_symbols)].copy()
 
         if df_filtered.empty:
+            print("警告: commodity_volume - 未找到目标品种数据")
             return pd.DataFrame(columns=['valuation_date', 'value'])
 
-        # 按日期和品种排序
-        df_filtered = df_filtered.sort_values(['symbol', 'valuation_date'])
+        # 对每个品种、每天，计算所有月份合约的成交量和持仓量平均值
+        df_agg = df_filtered.groupby(['valuation_date', 'symbol']).agg({
+            'volume': 'mean',
+            'open_interest': 'mean'
+        }).reset_index()
 
-        # 计算20日均值
-        df_filtered['volume_ma20'] = df_filtered.groupby('symbol')['volume'].transform(
-            lambda x: x.rolling(20, min_periods=1).mean()
-        )
-        df_filtered['oi_ma20'] = df_filtered.groupby('symbol')['open_interest'].transform(
-            lambda x: x.rolling(20, min_periods=1).mean()
-        )
+        # 计算单品种活跃度 = 0.5×成交量 + 0.5×持仓量
+        df_agg['activity'] = 0.5 * df_agg['volume'] + 0.5 * df_agg['open_interest']
 
-        # 计算单品种活跃度
-        df_filtered['volume_ratio'] = df_filtered['volume'] / df_filtered['volume_ma20']
-        df_filtered['oi_ratio'] = df_filtered['open_interest'] / df_filtered['oi_ma20']
-        df_filtered['activity'] = 0.5 * df_filtered['volume_ratio'] + 0.5 * df_filtered['oi_ratio']
+        # 获取主力合约数据用于计算权重
+        df_main = self._get_commodity_main_contracts(self.dp.raw_futureData_commodity())
 
         # 按日期计算加权活跃度（使用年度权重调整，符合南华规则）
-        dates = sorted(df_filtered['valuation_date'].unique())
+        dates = sorted(df_agg['valuation_date'].unique())
         activity_values = []
         current_weights = None  # 当前使用的权重（t-1时刻的权重）
         current_weight_year = None  # 当前权重对应的年份
@@ -2136,7 +2146,7 @@ class data_processing:
 
         for date in dates:
             date_dt = pd.to_datetime(date)
-            df_date = df_filtered[df_filtered['valuation_date'] == date].copy()
+            df_date = df_agg[df_agg['valuation_date'] == date].copy()
 
             # 如果有待生效的权重，在新的一天开始时生效
             if pending_weights is not None:
@@ -2187,8 +2197,6 @@ class data_processing:
                         current_weight_year = date_dt.year
 
         df_result = pd.DataFrame(activity_values)
-
-        # 计算5日变化率
         df_result['value'] = df_result['activity']
         df_result = df_result[['valuation_date', 'value']]
         df_result.dropna(inplace=True)
@@ -2285,7 +2293,7 @@ if __name__ == "__main__":
     df2 = dp.target_index()
     df2 = df2[['valuation_date', 'target_index']]
     dpro=data_processing('2015-01-03', '2025-01-15')
-    df=dpro.commodity_composite()
+    df=dpro.commodity_volume()
     print(df)
     df = df.merge(df2, on='valuation_date', how='left')
     #df = df[['valuation_date', 'difference', 'target_index']]

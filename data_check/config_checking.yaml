@@ -118,7 +118,7 @@ data_prepare_functions:
     name: raw_indexBasic
   - effective_start_date: '1975-01-02'
     name: raw_CopperGold
-  - effective_start_date: '2013-11-06'
+  - effective_start_date: '2013-12-20'
     name: raw_BMCI
   - effective_start_date: '1988-10-19'
     name: raw_DBI

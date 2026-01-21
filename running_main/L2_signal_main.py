@@ -158,7 +158,7 @@ class L2_signalConstruction:
 if __name__ == "__main__":
     #'LHBProportion', 'LargeOrder_difference', 'USDX','IndividualStock_Emotion',USBond,'IndividualStock_Emotion','ETF_Shares'
     #['MacroLiquidity', 'IndexPriceVolume', 'SpecialFactor', 'StockCapital', 'MacroEconomy', 'StockFundamentals', 'StockEmotion']
-    signal_name_list =['CommodityIndex','CommodityTrading','CommodityRelation'
+    signal_name_list =['CommodityTrading'
     ]
     mode = "test"         # 示例模式
     start_date = "2015-01-01"
