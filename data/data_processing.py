@@ -2287,6 +2287,120 @@ class data_processing:
         df_index.dropna(inplace=True)
         return df_index
 
+    # ======================== 季节性因子 ========================
+
+    def _get_holiday_periods(self, min_length=5):
+        """
+        识别法定节假日并返回假期段列表
+
+        Parameters:
+        -----------
+        min_length : int
+            最小假期长度（自然日），小于此长度的假期将被忽略，默认5天
+
+        Returns:
+        --------
+        list of tuple
+            每个元素为 (假期开始日期, 假期结束日期)
+        """
+        # 获取工作日列表
+        working_days = pd.to_datetime(self.dp.working_days_list)
+        working_days_set = set(working_days)
+
+        # 生成完整日期序列，排除周末
+        full_date_range = pd.date_range(start=working_days.min(), end=working_days.max(), freq='D')
+        weekday_dates = full_date_range[full_date_range.weekday < 5]
+
+        # 找出非周末但不是工作日的日期（即法定节假日）
+        holidays = sorted(list(set(weekday_dates) - working_days_set))
+
+        # 将连续的节假日合并为一个节假日段
+        holiday_periods = []
+        if holidays:
+            current_period_start = holidays[0]
+            current_period_end = holidays[0]
+
+            for i in range(1, len(holidays)):
+                # 如果与前一天相差不超过3天（考虑周末），认为是同一个假期
+                if (holidays[i] - current_period_end).days <= 3:
+                    current_period_end = holidays[i]
+                else:
+                    # 只保留长度>=min_length的假期
+                    period_length = (current_period_end - current_period_start).days + 1
+                    if period_length >= min_length:
+                        holiday_periods.append((current_period_start, current_period_end))
+                    current_period_start = holidays[i]
+                    current_period_end = holidays[i]
+
+            # 处理最后一个假期段
+            period_length = (current_period_end - current_period_start).days + 1
+            if period_length >= min_length:
+                holiday_periods.append((current_period_start, current_period_end))
+
+        return holiday_periods, working_days
+
+    def pre_holiday_effect(self):
+        """
+        计算节前效应因子
+
+        识别法定节假日（≥5天），节前5个工作日买大盘（信号=0）
+        非节前期间返回0.5（中性信号）
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含 valuation_date 和 pre_holiday_effect 列
+        """
+        # 获取假期段和工作日列表
+        holiday_periods, working_days = self._get_holiday_periods()
+        working_days_list = sorted(list(working_days))
+
+        # 创建结果DataFrame，默认值0.5
+        result_df = pd.DataFrame({'valuation_date': working_days_list})
+        result_df['pre_holiday_effect'] = 0.5
+
+        # 标记节前5个工作日为1（mode_7: >0 → 信号0 → 买大盘）
+        for period_start, period_end in holiday_periods:
+            pre_days = [d for d in working_days_list if d < period_start]
+            if len(pre_days) >= 5:
+                pre_holiday_days = pre_days[-5:]  # 取最后5个工作日
+                result_df.loc[result_df['valuation_date'].isin(pre_holiday_days), 'pre_holiday_effect'] = 1
+
+        # 格式化输出
+        result_df['valuation_date'] = result_df['valuation_date'].dt.strftime('%Y-%m-%d')
+        return result_df[['valuation_date', 'pre_holiday_effect']]
+
+    def post_holiday_effect(self):
+        """
+        计算节后效应因子
+
+        识别法定节假日（≥5天），节后5个工作日买小盘（信号=1）
+        非节后期间返回0.5（中性信号）
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含 valuation_date 和 post_holiday_effect 列
+        """
+        # 获取假期段和工作日列表
+        holiday_periods, working_days = self._get_holiday_periods()
+        working_days_list = sorted(list(working_days))
+
+        # 创建结果DataFrame，默认值0.5
+        result_df = pd.DataFrame({'valuation_date': working_days_list})
+        result_df['post_holiday_effect'] = 0.5
+
+        # 标记节后5个工作日为-1（mode_7: <0 → 信号1 → 买小盘）
+        for period_start, period_end in holiday_periods:
+            post_days = [d for d in working_days_list if d > period_end]
+            if len(post_days) >= 5:
+                post_holiday_days = post_days[:5]  # 取最前5个工作日
+                result_df.loc[result_df['valuation_date'].isin(post_holiday_days), 'post_holiday_effect'] = -1
+
+        # 格式化输出
+        result_df['valuation_date'] = result_df['valuation_date'].dt.strftime('%Y-%m-%d')
+        return result_df[['valuation_date', 'post_holiday_effect']]
+
 
 if __name__ == "__main__":
     dp = data_prepare('2015-01-03', '2025-12-29')

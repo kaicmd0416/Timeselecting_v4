@@ -148,22 +148,38 @@ class signal_construct:
         return final_signal
     def Monthly_effect_signal_construct(self, df):
         """
-        月度效应信号构建
-        
-        基于历史同月份的平均收益率差值构建信号。
-        
+        季节性效应信号构建（适用于Monthly_Effect, Pre_Holiday_Return）
+
+        基于历史平均收益率差值构建信号。
+        自动识别数据列名（monthly_effect, pre_holiday_return）
+
         Parameters:
         -----------
         df : pd.DataFrame
-            包含monthly_effect列的DataFrame
-        
+            包含效应值列的DataFrame
+
         Returns:
         --------
-        int
-            最终信号：0（沪深300）或1（中证2000）
+        float
+            最终信号：0（大盘）、1（小盘）、0.5（中性，各配50%）
         """
-        a = df['monthly_effect'].tolist()[-1]
-        if a > 0:
+        # 自动识别效应值列名
+        effect_cols = ['monthly_effect', 'pre_holiday_effect', 'post_holiday_effect']
+        value_col = None
+        for col in effect_cols:
+            if col in df.columns:
+                value_col = col
+                break
+
+        if value_col is None:
+            raise ValueError(f"DataFrame中未找到效应值列，期望列名: {effect_cols}")
+
+        a = df[value_col].tolist()[-1]
+
+        # 0.5为中性信号，直接返回
+        if a == 0.5:
+            final_signal = 0.5
+        elif a > 0:
             final_signal = 0
         else:
             final_signal = 1

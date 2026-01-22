@@ -344,7 +344,89 @@ if __name__ == "__main__":
 | Commodity_Composite | CommodityIndex | 综合商品指数 |
 | Commodity_Volume | CommodityTrading | 期货交易活跃度 |
 | Commodity_PPI_Correl | CommodityRelation | 商品指数与PPI相关性 |
-| CopperGold | CopperGold | 铜金比（从MacroEconomy迁移） |
+
+---
+*记录时间：2026-01-21*
+*Claude Opus 4.5*
+
+---
+
+## 2026-01-21 季节性因子（Seasonality）实施
+
+### 需求概述
+1. 新建L1因子`Seasonality`（季节性/周期性）
+2. 将原有`Monthly_effect`从`SpecialFactor`迁移至`Seasonality`
+3. 新增`Pre_Holiday_Return`（节假日效应）
+
+### 因子结构
+
+| L1因子 | L2因子 | L3因子 | 说明 | 信号模式 |
+|--------|--------|--------|------|----------|
+| Seasonality | Monthly_Effect | Monthly_Effect | 历史同月份效应 | mode_7 |
+| Seasonality | Holiday_Effect | Pre_Holiday_Return | 节假日前后效应 | mode_7 |
+
+### 修改文件清单
+
+#### 1. config_project/signal_dictionary.yaml
+- `Monthly_effect` → `Monthly_Effect`，L1_factor从`SpecialFactor`改为`Seasonality`
+- 新增`Pre_Holiday_Return`配置
+
+#### 2. data/data_processing.py（新增方法）
+
+**`pre_holiday_return()`方法：**
+```python
+def pre_holiday_return(self):
+    """计算节假日前后一周的大小盘收益率差值"""
+    # 1. 获取工作日列表，识别法定节假日（非周末的休市日）
+    # 2. 将连续节假日合并为一个假期段
+    # 3. 标记节前一周和节后一周的交易日
+    # 4. 计算历史节前节后的平均收益率差值（排除当年）
+    # 5. 输出valuation_date和pre_holiday_return
+```
+
+#### 3. running_main/L3_signal_main.py
+- `Monthly_effect` → `Monthly_Effect`
+- 新增`Pre_Holiday_Return`的elif分支
+
+#### 4. factor_processing/signal_constructing.py
+- 修改`Monthly_effect_signal_construct`方法，自动识别列名（支持monthly_effect、pre_holiday_return）
+
+### 计算逻辑说明
+
+#### Pre_Holiday_Return
+1. 通过工作日列表识别法定节假日（非周末的休市日）
+2. 将相邻节假日（间隔≤3天）合并为同一假期段
+3. 标记每个假期的节前一周和节后一周
+4. 计算历史节前节后期间的收益率差值平均数（排除当年）
+5. 正值 → 大盘占优，负值 → 小盘占优
+
+### 现有L1因子分类（共10个）
+
+| L1因子 | 说明 |
+|--------|------|
+| MacroLiquidity | 宏观流动性 |
+| MacroEconomy | 宏观经济 |
+| IndexPriceVolume | 指数价量 |
+| StockCapital | 股票资金 |
+| StockFundamentals | 股票基本面 |
+| StockEmotion | 股票情绪 |
+| SpecialFactor | 特殊因子 |
+| Commodity | 商品期货 |
+| **Seasonality** | **季节性（新增）** |
+| Rubbish | 弃用因子 |
+
+### 测试代码
+```python
+if __name__ == "__main__":
+    for signal_name in ['Monthly_Effect', 'Pre_Holiday_Return']:
+        ssm = L3_signalConstruction(
+            signal_name=signal_name,
+            mode='test',
+            start_date='2015-01-01',
+            end_date='2026-01-20'
+        )
+        ssm.signal_main()
+```
 
 ---
 *记录时间：2026-01-21*

@@ -42,10 +42,21 @@ CreditSpread_9M:
   L1_factor: MacroLiquidity
   L2_factor: CreditSpread
   L3_factor: CreditSpread_9M
-Monthly_effect:
-  L1_factor: SpecialFactor
-  L2_factor: Monthly_effect
-  L3_factor: Monthly_effect
+# ======================== 季节性因子 ========================
+Monthly_Effect:
+  L1_factor: Seasonality
+  L2_factor: Monthly_Effect
+  L3_factor: Monthly_Effect
+
+Pre_Holiday_Effect:
+  L1_factor: Seasonality
+  L2_factor: Pre_Holiday_Effect
+  L3_factor: Pre_Holiday_Effect
+
+Post_Holiday_Effect:
+  L1_factor: Seasonality
+  L2_factor: Post_Holiday_Effect
+  L3_factor: Post_Holiday_Effect
 TermSpread_9Y:
   L1_factor: MacroLiquidity
   L2_factor: TermSpread

@@ -200,8 +200,14 @@ class L3_signalConstruction:
         elif self.signal_name=='LargeOrder_difference':
             df=self.dpro.LargeOrder_difference()
             sc_mode='mode_8'
-        elif self.signal_name=='Monthly_effect':
+        elif self.signal_name=='Monthly_Effect':
             df=self.dpro.monthly_effect()
+            sc_mode='mode_7'
+        elif self.signal_name=='Pre_Holiday_Effect':
+            df=self.dpro.pre_holiday_effect()
+            sc_mode='mode_7'
+        elif self.signal_name=='Post_Holiday_Effect':
+            df=self.dpro.post_holiday_effect()
             sc_mode='mode_7'
         elif self.signal_name=='CPI':
             df=self.dp.raw_CPI_withdraw()
@@ -435,7 +441,7 @@ if __name__ == "__main__":
 
     ##,'Commodity_Volume'
     # 其他mode (不等于1,2,3,4) 对应的signal_name列表
-    other_mode_signal_names = ['Commodity_Volume']
+    other_mode_signal_names = ['Pre_Holiday_Effect','Post_Holiday_Effect']
     for signal_name in other_mode_signal_names:
         ssm=L3_signalConstruction(signal_name=signal_name,mode='test',start_date='2015-01-01',end_date='2026-01-18')
         ssm.signal_main()
