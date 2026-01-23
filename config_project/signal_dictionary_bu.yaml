@@ -1,3 +1,7 @@
 L1_factors: ['IndexPriceVolume', 'MacroEconomy', 'MacroLiquidity', 'SpecialFactor', 'StockCapital', 'StockEmotion', 'StockFundamentals']
 L2_factors: ['BMCI', 'Bank_Momentum', 'Bond', 'CPI', 'CopperGold', 'CreditSpread', 'DBI', 'ETF_Shares', 'EarningsYield_Reverse', 'Future_difference', 'Future_holding', 'Growth', 'IndividualStock_Emotion', 'LHBProportion', 'LargeOrder_difference', 'M1M2', 'Monthly_effect', 'NLBP_difference', 'PCT', 'PMI', 'PPI', 'RRScore_difference', 'RelativeIndex_Std', 'Relative_turnover', 'Shibor', 'TargetIndex_Fundamentals', 'TargetIndex_Momentum', 'TargetIndex_Technical', 'TermSpread', 'USBond', 'USDX']
 L3_factors: ['BMCI', 'Bank_Momentum', 'Bond_10Y', 'Bond_3Y', 'CPI', 'CopperGold', 'CreditSpread_5Y', 'CreditSpread_9M', 'DBI', 'ETF_Shares', 'EarningsYield_Reverse', 'Future_difference', 'Future_holding', 'Growth', 'Index_PB', 'Index_PE', 'LHBProportion', 'LargeOrder_difference', 'M1M2', 'Monthly_effect', 'NLBP_difference', 'PCT', 'PMI', 'PPI', 'RRScore_difference', 'RelativeReturn_std', 'RelativeVolume_std', 'Relative_turnover', 'Shibor_2W', 'Shibor_9M', 'Stock_HL', 'Stock_RT', 'TargetIndex_BBANDS', 'TargetIndex_MACD', 'TargetIndex_MOMENTUM', 'TargetIndex_MOMENTUM2', 'TargetIndex_PSA', 'TargetIndex_REVERSE', 'TargetIndex_RSRS', 'TermSpread_9Y', 'USBond_10Y', 'USBond_3Y', 'USDX']
+TargetIndex_REVERSE2:
+  L1_factor: Rubbish
+  L2_factor: TargetIndex_REVERSE2
+  L3_factor: TargetIndex_REVERSE2

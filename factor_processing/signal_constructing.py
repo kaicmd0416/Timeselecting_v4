@@ -148,10 +148,10 @@ class signal_construct:
         return final_signal
     def Monthly_effect_signal_construct(self, df):
         """
-        季节性效应信号构建（适用于Monthly_Effect, Pre_Holiday_Return）
+        季节性效应信号构建（适用于Monthly_Effect, Post_Holiday_Effect）
 
         基于历史平均收益率差值构建信号。
-        自动识别数据列名（monthly_effect, pre_holiday_return）
+        自动识别数据列名（monthly_effect, post_holiday_effect）
 
         Parameters:
         -----------
@@ -164,7 +164,7 @@ class signal_construct:
             最终信号：0（大盘）、1（小盘）、0.5（中性，各配50%）
         """
         # 自动识别效应值列名
-        effect_cols = ['monthly_effect', 'pre_holiday_effect', 'post_holiday_effect']
+        effect_cols = ['monthly_effect', 'post_holiday_effect']
         value_col = None
         for col in effect_cols:
             if col in df.columns:

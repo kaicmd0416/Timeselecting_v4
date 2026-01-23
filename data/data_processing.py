@@ -2339,37 +2339,6 @@ class data_processing:
 
         return holiday_periods, working_days
 
-    def pre_holiday_effect(self):
-        """
-        计算节前效应因子
-
-        识别法定节假日（≥5天），节前5个工作日买大盘（信号=0）
-        非节前期间返回0.5（中性信号）
-
-        Returns:
-        --------
-        pd.DataFrame
-            包含 valuation_date 和 pre_holiday_effect 列
-        """
-        # 获取假期段和工作日列表
-        holiday_periods, working_days = self._get_holiday_periods()
-        working_days_list = sorted(list(working_days))
-
-        # 创建结果DataFrame，默认值0.5
-        result_df = pd.DataFrame({'valuation_date': working_days_list})
-        result_df['pre_holiday_effect'] = 0.5
-
-        # 标记节前5个工作日为1（mode_7: >0 → 信号0 → 买大盘）
-        for period_start, period_end in holiday_periods:
-            pre_days = [d for d in working_days_list if d < period_start]
-            if len(pre_days) >= 5:
-                pre_holiday_days = pre_days[-5:]  # 取最后5个工作日
-                result_df.loc[result_df['valuation_date'].isin(pre_holiday_days), 'pre_holiday_effect'] = 1
-
-        # 格式化输出
-        result_df['valuation_date'] = result_df['valuation_date'].dt.strftime('%Y-%m-%d')
-        return result_df[['valuation_date', 'pre_holiday_effect']]
-
     def post_holiday_effect(self):
         """
         计算节后效应因子

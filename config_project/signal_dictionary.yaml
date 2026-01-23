@@ -44,18 +44,12 @@ CreditSpread_9M:
   L3_factor: CreditSpread_9M
 # ======================== 季节性因子 ========================
 Monthly_Effect:
-  L1_factor: Seasonality
-  L2_factor: Monthly_Effect
+  L1_factor: SpecialFactor
+  L2_factor: Seasonality_Effect
   L3_factor: Monthly_Effect
-
-Pre_Holiday_Effect:
-  L1_factor: Seasonality
-  L2_factor: Pre_Holiday_Effect
-  L3_factor: Pre_Holiday_Effect
-
 Post_Holiday_Effect:
-  L1_factor: Seasonality
-  L2_factor: Post_Holiday_Effect
+  L1_factor: SpecialFactor
+  L2_factor: Seasonality_Effect
   L3_factor: Post_Holiday_Effect
 TermSpread_9Y:
   L1_factor: MacroLiquidity
@@ -193,10 +187,7 @@ Index_NetProfit:
   L1_factor: StockFundamentals
   L2_factor: Index_NetProfit
   L3_factor: Index_NetProfit
-TargetIndex_REVERSE2:
-  L1_factor: Rubbish
-  L2_factor: TargetIndex_REVERSE2
-  L3_factor: TargetIndex_REVERSE2
+
 
 # ======================== 商品期货因子 ========================
 Commodity_Upside:
