@@ -136,6 +136,10 @@ RRScore_difference:
   L1_factor: SpecialFactor
   L2_factor: RRScore_difference
   L3_factor: RRScore_difference
+VP08Score_difference:
+  L1_factor: SpecialFactor
+  L2_factor: VP08Score_difference
+  L3_factor: VP08Score_difference
 Relative_turnover:
   L1_factor: StockEmotion
   L2_factor: Relative_turnover

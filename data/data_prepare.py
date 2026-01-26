@@ -1547,6 +1547,28 @@ class data_prepare:
         self._check_working_days_completeness(df, 'raw_rrscore_withdraw')
         return df
 
+    def raw_vp08score_withdraw(self):
+        """
+        获取VP08评分数据
+
+        从data_score_test表获取score_name='vp08'的评分数据
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期
+            - code: 股票代码
+            - score_name: 评分名称 (vp08)
+            - final_score: 最终评分值
+        """
+        inputpath = glv.get('raw_vp08score')
+        inputpath = inputpath + f" Where valuation_date between '{self.start_date}' and '{self.end_date}' and score_name = 'vp08'"
+        df = gt.data_getting(inputpath, config_path)
+        # 检查工作日完整性
+        self._check_working_days_completeness(df, 'raw_vp08score_withdraw')
+        return df
+
     def raw_futureData_commodity(self):
         """
         获取商品期货完整数据（含成交量、持仓量、收盘价）
@@ -1572,8 +1594,8 @@ class data_prepare:
         df = df[df['valuation_date'].isin(self.working_days_list)]
         return df
 if __name__ == "__main__":
-    dp=data_prepare('2015-01-03','2026-01-18')
-    df=dp.r()
+    dp=data_prepare('2015-01-03','2026-01-15')
+    df=dp.raw_vp08score_withdraw()
     df2=dp.target_index()
     df2=df2[['valuation_date','target_index']]
     df=df.merge(df2,on='valuation_date',how='left')

@@ -835,6 +835,71 @@ class data_processing:
         df_final = df_final[['valuation_date', 'value']]
         df_final.columns=['valuation_date','rrscoreDifference']
         return df_final
+
+    def vp08scoreDifference(self):
+        """
+        计算VP08评分差异
+
+        计算沪深300和国证2000成分股的平均VP08评分，然后计算它们的差值
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - vp08scoreDifference: VP08评分差异值（沪深300 - 国证2000）
+        """
+        df_score = self.dp.raw_vp08score_withdraw()
+        df_index_hs300 = self.dp.raw_index_weight('沪深300')
+        df_index_gz2000 = self.dp.raw_index_weight('国证2000')
+
+        # 确保日期格式为字符串格式
+        df_score['valuation_date'] = pd.to_datetime(df_score['valuation_date']).dt.strftime('%Y-%m-%d')
+        df_index_hs300['valuation_date'] = pd.to_datetime(df_index_hs300['valuation_date']).dt.strftime('%Y-%m-%d')
+        df_index_gz2000['valuation_date'] = pd.to_datetime(df_index_gz2000['valuation_date']).dt.strftime('%Y-%m-%d')
+
+        # 为指数成分股添加标识
+        df_index_hs300['organization'] = 'hs300'
+        df_index_gz2000['organization'] = 'gz2000'
+
+        # 合并两个指数的成分股数据
+        df_index_combined = pd.concat([
+            df_index_hs300[['valuation_date', 'code', 'organization']],
+            df_index_gz2000[['valuation_date', 'code', 'organization']]
+        ], ignore_index=True)
+
+        # 将 score 数据与成分股数据进行 merge，匹配日期和 code
+        df_merged = df_score.merge(
+            df_index_combined,
+            on=['valuation_date', 'code'],
+            how='inner'
+        )
+
+        # 按日期和指数类型分组计算均值
+        df_result = df_merged.groupby(['valuation_date', 'organization'])['final_score'].mean().reset_index()
+        df_result.rename(columns={'final_score': 'value'}, inplace=True)
+        df_result['type'] = 'vp08IndexScore'
+
+        # 转换为宽格式以计算 difference
+        df_pivot = df_result.pivot(index='valuation_date', columns='organization', values='value').reset_index()
+
+        # 填充缺失值
+        df_pivot.fillna(method='ffill', inplace=True)
+
+        # 计算 difference
+        df_pivot['difference'] = df_pivot['hs300'] - df_pivot['gz2000']
+
+        # 将 difference 转换为长格式，匹配 df_result 的格式
+        df_final = df_pivot[['valuation_date', 'difference']].copy()
+        df_final['organization'] = 'difference'
+        df_final['type'] = 'vp08IndexScore'
+        df_final.rename(columns={'difference': 'value'}, inplace=True)
+
+        # 重新排列列顺序，匹配 df_result 的格式
+        df_final = df_final[['valuation_date', 'value']]
+        df_final.columns=['valuation_date','vp08scoreDifference']
+        return df_final
+
     def index_PB(self):
         """
         计算指数PB相对值
@@ -2437,12 +2502,11 @@ class data_processing:
 
 
 if __name__ == "__main__":
-    dp = data_prepare('2015-01-03', '2025-12-29')
+    dp = data_prepare('2015-01-03', '2026-01-15')
     df2 = dp.target_index()
     df2 = df2[['valuation_date', 'target_index']]
     dpro=data_processing('2015-01-03', '2025-01-15')
-    df=dpro.commodity_volume()
-    print(df)
+    df=dpro.vp08scoreDifference()
     df = df.merge(df2, on='valuation_date', how='left')
     #df = df[['valuation_date', 'difference', 'target_index']]
     df.set_index('valuation_date', inplace=True, drop=True)

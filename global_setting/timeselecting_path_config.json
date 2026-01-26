@@ -49,6 +49,11 @@
             "sql_sheet": "data_score"
         },
         {
+            "data_type": "raw_vp08score",
+            "database": "data_prepared_new",
+            "sql_sheet": "data_score_test"
+        },
+        {
             "data_type": "portfolio_info",
             "database": "portfolio_new",
             "sql_sheet": "portfolio_info"

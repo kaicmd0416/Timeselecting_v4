@@ -309,6 +309,9 @@ class L3_signalConstruction:
         elif self.signal_name=='RRScore_difference':
             df=self.dpro.rrscoreDifference()
             sc_mode='mode_1'
+        elif self.signal_name=='VP08Score_difference':
+            df=self.dpro.vp08scoreDifference()
+            sc_mode='mode_8'
         elif self.signal_name=='Bank_Momentum':
             df=self.dp.BankMomentum_withdraw()
             sc_mode='mode_1'

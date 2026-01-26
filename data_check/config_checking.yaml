@@ -134,3 +134,5 @@ data_prepare_functions:
     name: raw_PCF_withdraw
   - effective_start_date: '2021-01-07'
     name: raw_NetProfit_withdraw
+  - effective_start_date: '2020-01-02'
+    name: raw_vp08score_withdraw
