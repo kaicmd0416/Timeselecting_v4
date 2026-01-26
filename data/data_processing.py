@@ -2370,6 +2370,71 @@ class data_processing:
         result_df['valuation_date'] = result_df['valuation_date'].dt.strftime('%Y-%m-%d')
         return result_df[['valuation_date', 'post_holiday_effect']]
 
+    # ======================== 事件驱动因子 ========================
+
+    def earnings_season(self):
+        """
+        计算财报季效应因子
+
+        A股财报披露截止日期：
+        - 年报+一季报：4月30日
+        - 中报：8月31日
+        - 三季报：10月31日
+
+        信号逻辑：
+        - 截止日前3周：因子值=1 → final_signal=0 → 买大盘（财报密集披露期，大盘稳健）
+        - 截止日后3周：因子值=-1 → final_signal=1 → 买小盘（财报落地后，小盘弹性大）
+        - 其他时间：因子值=0.5 → final_signal=0.5 → 中性
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含 valuation_date 和 earnings_season 列
+        """
+        # 获取工作日列表
+        working_days = pd.to_datetime(self.dp.working_days_list)
+        working_days_list = sorted(list(working_days))
+
+        # 创建结果DataFrame，默认中性
+        result_df = pd.DataFrame({'valuation_date': working_days_list})
+        result_df['earnings_season'] = 0.5
+
+        # 财报截止日期
+        earnings_deadlines = [
+            (4, 30),   # 年报+一季报截止
+            (8, 31),   # 中报截止
+            (10, 31),  # 三季报截止
+        ]
+
+        # 获取数据覆盖的年份范围
+        min_year = min(working_days_list).year
+        max_year = max(working_days_list).year
+
+        # 标记财报季窗口期
+        for year in range(min_year, max_year + 1):
+            for month, day in earnings_deadlines:
+                # 截止日
+                try:
+                    deadline = pd.Timestamp(year=year, month=month, day=day)
+                except ValueError:
+                    continue
+
+                # 截止日前3周：买大盘（因子值=1 → final_signal=0）
+                pre_start = deadline - pd.Timedelta(days=21)
+                pre_end = deadline
+                mask_pre = (result_df['valuation_date'] >= pre_start) & (result_df['valuation_date'] <= pre_end)
+                result_df.loc[mask_pre, 'earnings_season'] = 1
+
+                # 截止日后3周：买小盘（因子值=-1 → final_signal=1）
+                post_start = deadline + pd.Timedelta(days=1)
+                post_end = deadline + pd.Timedelta(days=21)
+                mask_post = (result_df['valuation_date'] >= post_start) & (result_df['valuation_date'] <= post_end)
+                result_df.loc[mask_post, 'earnings_season'] = -1
+
+        # 格式化输出
+        result_df['valuation_date'] = result_df['valuation_date'].dt.strftime('%Y-%m-%d')
+        return result_df[['valuation_date', 'earnings_season']]
+
 
 if __name__ == "__main__":
     dp = data_prepare('2015-01-03', '2025-12-29')

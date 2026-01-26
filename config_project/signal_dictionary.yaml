@@ -51,6 +51,11 @@ Post_Holiday_Effect:
   L1_factor: SpecialFactor
   L2_factor: Seasonality_Effect
   L3_factor: Post_Holiday_Effect
+# ======================== 事件驱动因子 ========================
+Earnings_Season:
+  L1_factor: SpecialFactor
+  L2_factor: EventDriven
+  L3_factor: Earnings_Season
 TermSpread_9Y:
   L1_factor: MacroLiquidity
   L2_factor: TermSpread

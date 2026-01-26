@@ -127,10 +127,10 @@ class L1_signalConstruction:
 
 if __name__ == "__main__":
     # 示例使用['MacroLiquidity', 'IndexPriceVolume', 'SpecialFactor', 'StockCapital', 'MacroEconomy', 'StockFundamentals', 'StockEmotion']
-    for signal_name in ['Commodity']:
+    for signal_name in ['SpecialFactor']:
         #signal_name = "IndexPriceVolume"  # 示例L1因子名称
         mode = "test"  # 示例模式
         start_date = "2015-01-01"
-        end_date = "2026-01-21"
+        end_date = '2026-01-23'
         signal_constructor = L1_signalConstruction(signal_name, start_date, end_date, mode)
         signal_constructor.L1_backtest_main()

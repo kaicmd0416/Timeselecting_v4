@@ -163,7 +163,7 @@ class signal_construct:
         float
             最终信号：0（大盘）、1（小盘）、0.5（中性，各配50%）
         """
-        # 自动识别效应值列名
+        # 自动识别效应值列名（仅用于需要回测历史数据的因子）
         effect_cols = ['monthly_effect', 'post_holiday_effect']
         value_col = None
         for col in effect_cols:
@@ -183,6 +183,48 @@ class signal_construct:
             final_signal = 0
         else:
             final_signal = 1
+        return final_signal
+
+    def fixed_time_signal_construct(self, df):
+        """
+        固定时间触发信号构建（适用于 Earnings_Season 等固定时间触发因子）
+
+        这类因子在特定时间段固定买入大盘或小盘，不需要回测历史数据选择参数。
+        因子值直接决定信号：
+        - 因子值 > 0 → final_signal = 0 → 买大盘
+        - 因子值 < 0 → final_signal = 1 → 买小盘
+        - 因子值 = 0.5 → final_signal = 0.5 → 中性
+
+        Parameters:
+        -----------
+        df : pd.DataFrame
+            包含因子值列的DataFrame
+
+        Returns:
+        --------
+        float
+            最终信号：0（大盘）、1（小盘）、0.5（中性）
+        """
+        # 自动识别因子值列名
+        factor_cols = ['earnings_season']
+        value_col = None
+        for col in factor_cols:
+            if col in df.columns:
+                value_col = col
+                break
+
+        if value_col is None:
+            raise ValueError(f"DataFrame中未找到因子值列，期望列名: {factor_cols}")
+
+        a = df[value_col].tolist()[-1]
+
+        # 直接根据因子值决定信号
+        if a == 0.5:
+            final_signal = 0.5
+        elif a > 0:
+            final_signal = 0  # 买大盘
+        else:
+            final_signal = 1  # 买小盘
         return final_signal
 
     def Monthly_data_construct(self, df):

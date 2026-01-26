@@ -25,7 +25,6 @@ from running_main.signal_construct_main import signal_constructing_main
 from portfolio.portfolio_construction import portfolio_updating
 import os
 from backtesting.signal_backtesting import signal_backtesting_main
-
 def target_date_decision():
     """
     自动确定目标日期（target_date）

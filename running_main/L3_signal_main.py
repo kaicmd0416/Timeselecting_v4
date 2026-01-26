@@ -206,6 +206,10 @@ class L3_signalConstruction:
         elif self.signal_name=='Post_Holiday_Effect':
             df=self.dpro.post_holiday_effect()
             sc_mode='mode_7'
+        # ======================== 事件驱动因子（固定时间触发，不需要回测） ========================
+        elif self.signal_name=='Earnings_Season':
+            df=self.dpro.earnings_season()
+            sc_mode='mode_14'  # 固定时间触发：财报前2周买大盘，财报后2周买小盘
         elif self.signal_name=='CPI':
             df=self.dp.raw_CPI_withdraw()
             sc_mode = 'mode_4'
@@ -352,7 +356,7 @@ class L3_signalConstruction:
         else:
             if self.sc_mode in ['mode_1','mode_2','mode_3','mode_4','mode_5','mode_10','mode_11','mode_7']:
                 max_ma = 250
-            elif self.sc_mode in ['mode_6','mode_8','mode_9']:
+            elif self.sc_mode in ['mode_6','mode_8','mode_9','mode_14']:
                 max_ma=30
             else:
                 max_ma=250
@@ -412,13 +416,21 @@ class L3_signalConstruction:
             elif self.sc_mode=='mode_12':
                 signal = self.sc.Monthly_data_construct(daily_df)
                 signal_list.append(signal)
-            if self.sc_mode!='mode_13':
+            elif self.sc_mode=='mode_14':
+                # 固定时间触发因子，直接输出信号，不需要回测选择x
+                signal = self.sc.fixed_time_signal_construct(daily_df)
+                signal_list.append(signal)
+            if self.sc_mode=='mode_13':
+                final_signal_list = self.sc.RSRS_construct(daily_df,x_list)
+            elif self.sc_mode=='mode_14':
+                # 固定时间触发因子：所有x值使用相同的信号（因为不需要回测选择）
+                final_signal = signal_list[0]
+                final_signal_list = [final_signal] * len(x_list)
+            else:
                 final_signal = mean(signal_list)
                 for x in x_list:
                     final_signal2 = self.final_signal_construction(final_signal, x)
                     final_signal_list.append(final_signal2)
-            else:
-                 final_signal_list = self.sc.RSRS_construct(daily_df,x_list)
             df_final['x']=x_list
             df_final['final_signal']=final_signal_list
             df_final['valuation_date']=date
@@ -438,9 +450,9 @@ if __name__ == "__main__":
 
     ##,'Commodity_Volume'
     # 其他mode (不等于1,2,3,4) 对应的signal_name列表
-    other_mode_signal_names = ['Post_Holiday_Effect']
+    other_mode_signal_names = ['TargetIndex_REVERSE']
     for signal_name in other_mode_signal_names:
-        ssm=L3_signalConstruction(signal_name=signal_name,mode='test',start_date='2015-01-01',end_date='2026-01-18')
+        ssm=L3_signalConstruction(signal_name=signal_name,mode='prod',start_date='2015-01-01',end_date='2026-01-26')
         ssm.signal_main()
     # for signal_name in other_mode_signal_names:
     #     ssm=single_signal_main(signal_name=signal_name,mode='test',start_date='2015-01-01',end_date='2025-09-27')

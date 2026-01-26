@@ -158,11 +158,11 @@ class L2_signalConstruction:
 if __name__ == "__main__":
     #'LHBProportion', 'LargeOrder_difference', 'USDX','IndividualStock_Emotion',USBond,'IndividualStock_Emotion','ETF_Shares'
     #['MacroLiquidity', 'IndexPriceVolume', 'SpecialFactor', 'StockCapital', 'MacroEconomy', 'StockFundamentals', 'StockEmotion']
-    signal_name_list =['Seasonality_Effect'
+    signal_name_list =['TargetIndex_Momentum'
     ]
-    mode = "test"         # 示例模式
-    start_date = "2015-01-01"
-    end_date = "2026-01-18"
+    mode = "prod"         # 示例模式
+    start_date = "2026-01-26"
+    end_date = "2026-01-26"
     cost = 0.00006
 
     big_indexName = "上证50"
