@@ -453,7 +453,7 @@ if __name__ == "__main__":
 
     ##,'Commodity_Volume'
     # 其他mode (不等于1,2,3,4) 对应的signal_name列表
-    other_mode_signal_names = ['TargetIndex_REVERSE']
+    other_mode_signal_names = ['Future_holding']
     for signal_name in other_mode_signal_names:
         ssm=L3_signalConstruction(signal_name=signal_name,mode='prod',start_date='2015-01-01',end_date='2026-01-26')
         ssm.signal_main()
