@@ -102,8 +102,6 @@ data_prepare_functions:
     name: target_index
   - effective_start_date: '2015-01-05'
     name: target_index_candle
-  - effective_start_date: '2015-01-05'
-    name: target_index_candle2
   - effective_start_date: '2022-07-19'
     name: future_difference_withdraw
   - effective_start_date: '2024-01-02'
@@ -136,3 +134,6 @@ data_prepare_functions:
     name: raw_NetProfit_withdraw
   - effective_start_date: '2020-01-02'
     name: raw_vp08score_withdraw
+  - effective_start_date: '2019-12-23'
+    name: raw_optionData_withdraw
+

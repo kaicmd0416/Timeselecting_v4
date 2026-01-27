@@ -1,37 +1,77 @@
 """
 L3级别信号生成模块 (L3_signal_main)
 
-本模块负责生成L3级别的择时信号。L3信号是最底层的信号，基于原始因子计算。
+本模块负责生成L3级别的择时信号。L3信号是最底层的信号，基于原始因子数据计算。
+每个L3因子对应一个具体的量化指标，通过特定的信号构建模式转换为择时信号。
 
-支持的信号模式：
-- mode_1: 正向direction（因子值越大，信号越强）
-- mode_2: 反向direction（因子值越小，信号越强）
-- mode_3: 月度因子专用
-- mode_4: 月度反向因子专用
-- mode_5: M1M2专用
-- mode_6: 技术指标专用
-- mode_8: 短周期均线正向direction
-- mode_9: 短周期均线反向direction
-- mode_10: 长周期均线正向direction
-- mode_11: 长周期均线反向direction
+信号体系层级结构:
+    L0 (最终信号) ← 聚合所有L1信号
+    L1 (一级因子) ← 聚合对应的L2信号
+    L2 (二级因子) ← 聚合对应的L3信号
+    L3 (三级因子) ← 原始因子数据计算  ← 【当前模块】
+
+支持的信号构建模式（sc_mode）:
+    - mode_1: 长周期均线正向 - 短MA > 长MA → 买大盘
+              适用因子: Shibor, Bond, CreditSpread等利率类因子
+    - mode_2: 长周期均线反向 - 短MA > 长MA → 买小盘
+              适用因子: USDX, TermSpread, LHBProportion等
+    - mode_3: 月度因子正向 - 当月值 > 历史均值 → 买大盘
+              适用因子: PPI, PMI等宏观月度数据
+    - mode_4: 月度因子反向 - 当月值 > 历史均值 → 买小盘
+              适用因子: CPI等
+    - mode_5: M1M2专用 - 综合M1、M2和剪刀差判断
+              适用因子: M1M2
+    - mode_6: 技术指标专用 - 直接根据技术指标状态判断
+              适用因子: MACD, BBANDS, KDJ, PSA等
+    - mode_7: 季节性效应 - 根据历史同期表现判断
+              适用因子: Monthly_Effect, Post_Holiday_Effect
+    - mode_8: 短周期均线正向 - 短MA > 长MA → 买大盘（窗口期较短）
+              适用因子: LargeOrder, ETF_Shares, 期权因子等
+    - mode_9: 短周期均线反向 - 短MA > 长MA → 买小盘
+              适用因子: Stock_RT, Future_difference, Commodity_Downside等
+    - mode_10: 长周期均线正向（慢速版）
+              适用因子: EarningsYield_Reverse, IPO
+    - mode_11: 长周期均线反向（慢速版）
+              适用因子: Growth
+    - mode_13: RSRS专用模式
+              适用因子: TargetIndex_RSRS
+    - mode_14: 固定时间触发 - 按照固定时间规则生成信号
+              适用因子: Earnings_Season（财报季因子）
+
+x参数说明:
+    x是信号阈值参数，用于控制信号的敏感度：
+    - x越大（如0.8），信号越谨慎，中性信号越多
+    - x越小（如0.55），信号越激进，方向性信号越多
+    - 可选值: [0.55, 0.6, 0.65, 0.7, 0.75, 0.8]
+
+Forward-Looking防护:
+    本模块使用slice_processing确保只使用target_date之前的数据：
+    df = df[df['valuation_date'] < target_date]
+    这样保证了信号生成不会使用未来数据。
 
 作者: TimeSelecting Team
 版本: v3.0
 """
 
+# ==================== 标准库导入 ====================
 from datetime import datetime
+import os
+import sys
+
+# ==================== 第三方库导入 ====================
 import pandas as pd
 from numpy import *
+
+# ==================== 自定义模块导入 ====================
 from data.data_prepare import data_prepare
 from data.data_processing import data_processing
 from factor_processing.signal_constructing import signal_construct, factor_processing
-import os
-import sys
+
+# 添加全局工具函数路径
 path = os.getenv('GLOBAL_TOOLSFUNC_new')
 sys.path.append(path)
 import global_tools as gt
 import global_setting.global_dic as glv
-import os
 
 class L3_signalConstruction:
     """
@@ -334,6 +374,34 @@ class L3_signalConstruction:
         elif self.signal_name=='Commodity_Composite':
             df=self.dpro.commodity_composite()
             sc_mode='mode_1'  # 正向：同比上行→大盘占优
+        # ======================== 期权因子 ========================
+        elif self.signal_name=='Option_PCR_OI':
+            df=self.dpro.option_PCR_OI()
+            sc_mode='mode_8'  # 短周期均线正向：基于持仓量，大盘PCR-小盘PCR，差值高→大盘更恐慌→买大盘
+        elif self.signal_name=='Option_PCR_Amt':
+            df=self.dpro.option_PCR_Amt()
+            sc_mode='mode_8'  # 短周期均线正向：基于成交额，大盘PCR-小盘PCR，差值高→大盘更恐慌→买大盘
+        elif self.signal_name=='Option_PCR_Volume':
+            df=self.dpro.option_PCR_Volume()
+            sc_mode='mode_8'  # 短周期均线正向：基于成交量，大盘PCR-小盘PCR，差值高→大盘更恐慌→买大盘
+        elif self.signal_name=='Option_IV':
+            df=self.dpro.option_IV()
+            sc_mode='mode_8'  # 短周期均线正向：大盘IV-小盘IV，差值高→大盘更恐慌→买大盘
+        elif self.signal_name=='Option_IVSkew':
+            df=self.dpro.option_IVSkew()
+            sc_mode='mode_8'  # 短周期均线正向：大盘IVSkew-小盘IVSkew，差值高→大盘更恐慌→买大盘
+        elif self.signal_name=='Option_IV_Chg':
+            df=self.dpro.option_IV_Chg()
+            sc_mode='mode_8'  # 短周期均线正向：大盘IV变化率-小盘IV变化率，差值高→大盘恐慌升温→买大盘
+        elif self.signal_name=='Option_OI_Chg':
+            df=self.dpro.option_OI_Chg()
+            sc_mode='mode_8'  # 短周期均线正向：大盘OI变化率-小盘OI变化率，差值高→大盘资金流入→买大盘
+        elif self.signal_name=='Option_Turnover':
+            df=self.dpro.option_Turnover()
+            sc_mode='mode_8'  # 短周期均线正向：大盘换手率-小盘换手率，差值高→大盘更活跃→买大盘
+        elif self.signal_name=='Option_CallPut_Spread':
+            df=self.dpro.option_CallPut_Spread()
+            sc_mode='mode_8'  # 短周期均线正向：大盘认购认沽涨跌差-小盘，差值高→大盘多头更强→买大盘
         else:
             print('signal_name还没有纳入系统')
             raise ValueError
@@ -369,97 +437,236 @@ class L3_signalConstruction:
         return start_date
 
     def signal_main(self):
-        df_sql=pd.DataFrame()
-        inputpath_sql=glv.get('sql_path')
-        if self.mode=='prod':
-             sm = gt.sqlSaving_main(inputpath_sql, 'L3_signal_prod', delete=True)
+        """
+        L3信号生成主函数
+
+        遍历每个交易日，根据sc_mode生成对应的择时信号。
+        每天会生成多个x参数下的信号，用于后续best_x的选择。
+
+        处理流程:
+            1. 获取交易日列表
+            2. 对每个交易日:
+               a. 使用slice_processing获取该日之前的数据（避免forward-looking）
+               b. 根据sc_mode选择信号构建方法
+               c. 计算不同参数组合的信号
+               d. 对信号取平均值
+               e. 对每个x阈值生成最终信号
+            3. 保存所有信号到数据库
+
+        数据库表结构:
+            - valuation_date: 日期
+            - final_signal: 信号值（0/0.5/1）
+            - x: 阈值参数
+            - signal_name: 因子名称
+            - update_time: 更新时间
+
+        注意:
+            - 每天会生成6条记录（对应6个不同的x值）
+            - 后续L2层级会通过回测选择最优的x
+        """
+        # ==================== 初始化 ====================
+        df_sql = pd.DataFrame()  # 用于收集所有日期的信号
+        inputpath_sql = glv.get('sql_path')
+
+        # 根据模式选择数据库表
+        if self.mode == 'prod':
+            sm = gt.sqlSaving_main(inputpath_sql, 'L3_signal_prod', delete=True)
         else:
             sm = gt.sqlSaving_main(inputpath_sql, 'L3_signal_test', delete=True)
+
+        # 获取需要处理的交易日列表
         working_days_list = gt.working_days_list(self.start_date, self.end_date)
+
+        # ==================== 遍历每个交易日 ====================
         for date in working_days_list:
+            # x阈值列表，用于生成不同敏感度的信号
             x_list = [0.55, 0.6, 0.65, 0.7, 0.75, 0.8]
             df_final = pd.DataFrame()
             final_signal_list = []
             signal_list = []
+
+            # 【关键】使用slice_processing获取date之前的数据，避免forward-looking
             daily_df = self.fp.slice_processing(self.df_signal, date)
-            if self.sc_mode in ['mode_1','mode_2','mode_3','mode_4','mode_8','mode_9','mode_10','mode_11']:
-                # Define short and long windows
-                if self.sc_mode in ['mode_1','mode_2']:
+            # ==================== 根据sc_mode选择信号构建方法 ====================
+
+            if self.sc_mode in ['mode_1', 'mode_2', 'mode_3', 'mode_4', 'mode_8', 'mode_9', 'mode_10', 'mode_11']:
+                # ========== 均线差异类信号构建 ==========
+                # 通过比较短期均线和长期均线的差值生成信号
+                # 遍历多个窗口组合，最后取平均
+
+                # 根据mode选择不同的窗口参数
+                if self.sc_mode in ['mode_1', 'mode_2']:
+                    # 长周期模式：窗口较大，适合趋势性因子
                     short_windows = [1, 5, 10, 15, 20]
                     long_windows = [5, 10, 15, 20, 30, 40, 60, 90, 120, 180, 250]
-                elif self.sc_mode in ['mode_8','mode_9']:
+                elif self.sc_mode in ['mode_8', 'mode_9']:
+                    # 短周期模式：窗口较小，适合高频因子
                     short_windows = [1, 5, 10]
                     long_windows = [5, 10, 15, 20, 30]
-                elif self.sc_mode in ['mode_10','mode_11']:
+                elif self.sc_mode in ['mode_10', 'mode_11']:
+                    # 超长周期模式：窗口更大，适合缓慢变化的因子
                     short_windows = [10, 15, 20]
                     long_windows = [30, 40, 60, 90, 120, 180, 250]
                 else:
-                    short_windows = [20,40]
-                    long_windows = [20,40, 60, 80, 100,120, 180, 250]
-                # Create combinations where short window is less than long window
+                    # 月度因子模式
+                    short_windows = [20, 40]
+                    long_windows = [20, 40, 60, 80, 100, 120, 180, 250]
+
+                # 生成所有短窗口<长窗口的组合
                 rolling_list = []
                 for short_window in short_windows:
                     for long_window in long_windows:
                         if short_window < long_window:
                             rolling_list.append([short_window, long_window])
+
+                # 对每个窗口组合计算信号
                 for rolling_window in rolling_list:
                     signal = self.sc.MA_difference_signal_construct(daily_df, rolling_window, self.sc_mode)
                     signal_list.append(signal)
-            elif self.sc_mode=='mode_5': #M1M2专属
-                rolling_list = [20, 40, 60, 80, 100, 120, 180,250]
+
+            elif self.sc_mode == 'mode_5':
+                # ========== M1M2专用模式 ==========
+                # 综合考虑M2和M1-M2剪刀差的信号
+                rolling_list = [20, 40, 60, 80, 100, 120, 180, 250]
                 for rolling_window in rolling_list:
                     signal = self.sc.M1M2_signal_construct(daily_df, rolling_window)
                     signal_list.append(signal)
-            elif self.sc_mode=='mode_6':
-                signal=self.sc.technical_signal_construct(daily_df,self.signal_name)
+
+            elif self.sc_mode == 'mode_6':
+                # ========== 技术指标专用模式 ==========
+                # 直接根据技术指标状态判断信号，如MACD金叉死叉
+                signal = self.sc.technical_signal_construct(daily_df, self.signal_name)
                 signal_list.append(signal)
-            elif self.sc_mode=='mode_7':
-                signal=self.sc.Monthly_effect_signal_construct(daily_df)
+
+            elif self.sc_mode == 'mode_7':
+                # ========== 季节性效应模式 ==========
+                # 根据历史同期表现判断
+                signal = self.sc.Monthly_effect_signal_construct(daily_df)
                 signal_list.append(signal)
-            elif self.sc_mode=='mode_12':
+
+            elif self.sc_mode == 'mode_12':
+                # ========== 月度数据模式 ==========
                 signal = self.sc.Monthly_data_construct(daily_df)
                 signal_list.append(signal)
-            elif self.sc_mode=='mode_14':
-                # 固定时间触发因子，直接输出信号，不需要回测选择x
+
+            elif self.sc_mode == 'mode_14':
+                # ========== 固定时间触发模式 ==========
+                # 如财报季因子，按固定规则生成信号
                 signal = self.sc.fixed_time_signal_construct(daily_df)
                 signal_list.append(signal)
-            if self.sc_mode=='mode_13':
-                final_signal_list = self.sc.RSRS_construct(daily_df,x_list)
-            elif self.sc_mode=='mode_14':
-                # 固定时间触发因子：所有x值使用相同的信号（因为不需要回测选择）
+
+            # ==================== 生成最终信号 ====================
+
+            if self.sc_mode == 'mode_13':
+                # RSRS模式：直接返回不同x下的信号列表
+                final_signal_list = self.sc.RSRS_construct(daily_df, x_list)
+
+            elif self.sc_mode == 'mode_14':
+                # 固定时间触发模式：所有x使用相同信号（不需要回测选择）
                 final_signal = signal_list[0]
                 final_signal_list = [final_signal] * len(x_list)
+
             else:
-                final_signal = mean(signal_list)
+                # 常规模式：取所有窗口信号的平均值，再根据x阈值转换
+                final_signal = mean(signal_list)  # 信号平均值（0-1之间）
                 for x in x_list:
+                    # 根据阈值x将连续信号转换为离散信号
                     final_signal2 = self.final_signal_construction(final_signal, x)
                     final_signal_list.append(final_signal2)
-            df_final['x']=x_list
-            df_final['final_signal']=final_signal_list
-            df_final['valuation_date']=date
-            df_final=df_final[['valuation_date','final_signal','x']]
-            if len(df_final)>0:
-                df_sql=pd.concat([df_sql,df_final])
+
+            # ==================== 整理当天数据 ====================
+            df_final['x'] = x_list
+            df_final['final_signal'] = final_signal_list
+            df_final['valuation_date'] = date
+            df_final = df_final[['valuation_date', 'final_signal', 'x']]
+
+            # 追加到总结果中
+            if len(df_final) > 0:
+                df_sql = pd.concat([df_sql, df_final])
+        # ==================== 特殊因子后处理 ====================
         if self.signal_name == 'Future_holding':
+            # Future_holding因子需要特殊处理：
+            # 当沪深300处于"normal"状态时，信号需要反转
             df_signal = self.dpro.hs300_weekly_close()
             df_sql = df_sql.merge(df_signal, on='valuation_date', how='left')
-            df_sql.loc[df_sql['signal']=='normal',['final_signal']] = (df_sql[df_sql['signal']=='normal']['final_signal']-1)*-1
+            # 反转信号：0→1, 1→0, 0.5保持不变
+            df_sql.loc[df_sql['signal'] == 'normal', ['final_signal']] = \
+                (df_sql[df_sql['signal'] == 'normal']['final_signal'] - 1) * -1
             df_sql.drop(columns='signal', inplace=True)
-        df_sql['signal_name'] = self.signal_name
-        df_sql['update_time']=datetime.now().replace(tzinfo=None)  # 当前时间
-        sm.df_to_sql(df_sql,'signal_name',self.signal_name)
 
+        # ==================== 添加元数据并保存 ====================
+        df_sql['signal_name'] = self.signal_name  # 添加因子名称
+        df_sql['update_time'] = datetime.now().replace(tzinfo=None)  # 添加更新时间
+
+        # 保存到数据库，第二和第三个参数用于删除旧数据
+        sm.df_to_sql(df_sql, 'signal_name', self.signal_name)
+
+
+# ==================== 主程序入口 ====================
 if __name__ == "__main__":
+    """
+    批量运行L3信号生成
 
-    ##,'Commodity_Volume'
-    # 其他mode (不等于1,2,3,4) 对应的signal_name列表
+    L3因子完整列表（按分类）:
+
+    宏观流动性类 (MacroLiquidity):
+        - Shibor_2W, Shibor_9M
+        - Bond_3Y, Bond_10Y
+        - CreditSpread_5Y, CreditSpread_9M
+        - TermSpread_9Y
+        - M1M2
+
+    指数量价类 (IndexPriceVolume):
+        - TargetIndex_MACD, TargetIndex_BBANDS, TargetIndex_PSA
+        - TargetIndex_MOMENTUM, TargetIndex_MOMENTUM2, TargetIndex_REVERSE
+        - TargetIndex_RSRS
+        - RelativeVolume_std, RelativeReturn_std
+
+    资金流向类 (StockCapital):
+        - NLBP_difference, LargeOrder_difference
+        - ETF_Shares
+        - USDX, USBond_3Y, USBond_10Y
+
+    市场情绪类 (StockEmotion):
+        - Stock_HL, Stock_RT
+        - Future_difference, Future_holding
+        - Bank_Momentum
+        - Relative_turnover
+
+    宏观经济类 (MacroEconomy):
+        - CPI, PPI, PMI
+        - CopperGold, BMCI, DBI, PCT
+
+    股票基本面类 (StockFundamentals):
+        - Index_PE, Index_PB, Index_PS, Index_PCF
+        - Index_NetProfit
+        - EarningsYield_Reverse, Growth
+
+    特殊因子类 (SpecialFactor):
+        - Monthly_Effect, Post_Holiday_Effect
+        - Earnings_Season
+        - RRScore_difference, VP08Score_difference
+
+    商品期货类 (Commodity):
+        - Commodity_Upside, Commodity_Downside
+        - Commodity_Volume, Commodity_PPI_Correl
+        - Commodity_Composite
+
+    期权因子类 (Option):
+        - Option_PCR_OI, Option_PCR_Amt, Option_PCR_Volume
+        - Option_IV, Option_IVSkew
+        - Option_IV_Chg, Option_OI_Chg
+        - Option_Turnover, Option_CallPut_Spread
+    """
+    # 要处理的L3因子列表
     other_mode_signal_names = ['Future_holding']
+
+    # 批量处理因子
     for signal_name in other_mode_signal_names:
-        ssm=L3_signalConstruction(signal_name=signal_name,mode='prod',start_date='2015-01-01',end_date='2026-01-26')
+        ssm = L3_signalConstruction(
+            signal_name=signal_name,
+            mode='prod',           # 运行模式
+            start_date='2015-01-01',  # 开始日期
+            end_date='2026-01-26'     # 结束日期
+        )
         ssm.signal_main()
-    # for signal_name in other_mode_signal_names:
-    #     ssm=single_signal_main(signal_name=signal_name,mode='test',start_date='2015-01-01',end_date='2025-09-27')
-    #     ssm.signal_main()
-    
-    # ssm=single_signal_main(signal_name='TermSpread_9Y',mode='test',start_date='2015-01-01',end_date='2025-09-27')
-    # ssm.signal_main()

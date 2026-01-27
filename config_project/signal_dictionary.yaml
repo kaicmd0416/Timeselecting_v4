@@ -223,3 +223,55 @@ Commodity_Composite:
   L1_factor: Commodity
   L2_factor: CommodityIndex
   L3_factor: Commodity_Composite
+
+# ======================== 期权因子 ========================
+# PCR因子（高相关性，共用L2）
+Option_PCR_OI:
+  L1_factor: Option
+  L2_factor: OptionPCR
+  L3_factor: Option_PCR_OI
+
+Option_PCR_Amt:
+  L1_factor: Option
+  L2_factor: OptionPCR
+  L3_factor: Option_PCR_Amt
+
+Option_PCR_Volume:
+  L1_factor: Option
+  L2_factor: OptionPCR
+  L3_factor: Option_PCR_Volume
+
+# 波动率因子（中等相关性，共用L2）
+Option_IV:
+  L1_factor: Option
+  L2_factor: OptionIV
+  L3_factor: Option_IV
+
+Option_IVSkew:
+  L1_factor: Option
+  L2_factor: OptionIV
+  L3_factor: Option_IVSkew
+
+# 波动率动量因子（独立L2）
+Option_IV_Chg:
+  L1_factor: Option
+  L2_factor: OptionIVMomentum
+  L3_factor: Option_IV_Chg
+
+# 持仓量动量因子（独立L2）
+Option_OI_Chg:
+  L1_factor: Option
+  L2_factor: OptionOIMomentum
+  L3_factor: Option_OI_Chg
+
+# 换手率因子（独立L2）
+Option_Turnover:
+  L1_factor: Option
+  L2_factor: OptionTurnover
+  L3_factor: Option_Turnover
+
+# 认购认沽价差因子（独立L2）
+Option_CallPut_Spread:
+  L1_factor: Option
+  L2_factor: OptionPriceSpread
+  L3_factor: Option_CallPut_Spread

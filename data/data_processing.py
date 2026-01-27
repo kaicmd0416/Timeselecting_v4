@@ -206,45 +206,6 @@ class data_processing:
         df_final.dropna(inplace=True)
         df_final=df_final[['valuation_date','difference']]
         return df_final
-    def futureHoldingchg_analyse(self):
-        df = self.dp.raw_futureHolding()
-        df.dropna(inplace=True)
-        df['net_holding'] = df['long_hld'] - df['short_hld']
-        df['total_holding']=abs(df['long_hld']) + abs(df['short_hld'])
-        #df = df[~(df['net_holding'] == 0)]
-        df['net_chg'] = df['long_chg'] - df['short_chg']
-        df['net_chg'] = df['net_chg'] / df['total_holding']
-        df = df[['valuation_date', 'net_holding', 'net_chg', 'new_symbol','total_holding']]
-        # df2=df.groupby(['valuation_date', 'new_symbol']).sum()
-        # df2.reset_index(inplace=True)
-        # df2=df2[['valuation_date','new_symbol','total_holding']]
-        # df2.rename(columns={'total_holding':'symbol_holding'},inplace=True)
-        # df=df.merge(df2,on=['valuation_date','new_symbol'],how='left')
-        #df['net_chg']=df['net_chg']*df['total_holding']/df['symbol_holding']
-        df = df.groupby(['valuation_date', 'new_symbol']).sum()
-        df.reset_index(inplace=True)
-        df_big = df[df['new_symbol'].isin(['IH', 'IF'])]
-        df_small = df[df['new_symbol'].isin(['IC', 'IM'])]
-        df_big.drop(columns='new_symbol', inplace=True)
-        df_small.drop(columns='new_symbol', inplace=True)
-        df_big = df_big.groupby(['valuation_date']).sum()
-        df_small = df_small.groupby(['valuation_date']).sum()
-        df_big = df_big[['net_chg']]
-        df_small = df_small[['net_chg']]
-        df_big.columns = ['big_chg']
-        df_small.columns = ['small_chg']
-        df_big.reset_index(inplace=True)
-        df_small.reset_index(inplace=True)
-        df_final = df_big.merge(df_small, on='valuation_date', how='left')
-        df_final['difference'] = df_final['big_chg'] - df_final['small_chg']
-        df_final = df_final[['valuation_date', 'difference']]
-        df_final.columns = ['valuation_date', 'netHolding_chg']
-        df_final['netHolding_chg'] = df_final['netHolding_chg'].rolling(10).sum()
-        #df_final = df_final.merge(df_signal, on='valuation_date', how='left')
-        #df_final['netHolding_chg'] = df_final['netHolding_chg'] * df_final['signal']
-        df_final.dropna(inplace=True)
-        df_final = df_final[['valuation_date', 'netHolding_chg']]
-        return df_final
     def credit_spread_3M(self):
         """
         计算3个月信用利差
@@ -355,8 +316,26 @@ class data_processing:
         df_final['difference'] = df_final['M1'] - df_final['M2']
         return df_final
     def US_stock(self):
-         df_D=self.dp.raw_DJUS()
-         df_N=self.dp.raw_NDAQ()
+        """
+        计算美国股市道琼斯与纳斯达克的相对强弱
+
+        获取道琼斯工业指数和纳斯达克指数的数据，计算累计收益率，
+        然后计算道琼斯/纳斯达克的比值（D/N）。
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - DJUS: 道琼斯指数累计收益
+            - NDAQ: 纳斯达克指数累计收益
+            - D/N: 道琼斯/纳斯达克比值
+
+        说明:
+            D/N 比值上升表示道琼斯（大盘蓝筹）相对纳斯达克（科技成长）走强
+        """
+        df_D=self.dp.raw_DJUS()
+        df_N=self.dp.raw_NDAQ()
          df_us=df_D.merge(df_N,on='valuation_date',how='outer')
          df_us.dropna(inplace=True)
          df_us.set_index('valuation_date', inplace=True, drop=True)
@@ -1271,96 +1250,6 @@ class data_processing:
         
         return final_result[['valuation_date', 'raising_number']]
     
-    def stock_number(self):
-        """
-        计算涨跌停家数差值
-        
-        计算每天股票涨跌停家数之差：
-        - 00、60开头：涨跌停阈值9.5%
-        - 68、30开头：涨跌停阈值19.5%
-        - 正数为涨停多于跌停，负数为跌停多于涨停
-        
-        Returns:
-        --------
-        pd.DataFrame
-            包含以下列的DataFrame：
-            - valuation_date: 日期，格式为 'YYYY-MM-DD'
-            - stock_number: 涨跌停家数差值
-        """
-        """
-        计算每天股票涨跌停家数之差
-        正数为涨停，负数为跌停
-        00、60开头：涨跌停阈值9.5%
-        68、30开头：涨跌停阈值19.5%
-
-        Returns:
-            DataFrame: 包含日期和涨跌停家数差值的DataFrame
-        """
-        # 获取股票收益率数据
-        df_stock = self.dp.raw_stockPct_withdraw()
-
-        # 转换日期列为datetime类型，并删除无效日期
-        df_stock['valuation_date'] = pd.to_datetime(df_stock['valuation_date'])
-        df_stock = df_stock.dropna(subset=['valuation_date'])
-
-        # 过滤股票代码，只保留00、60、68、30开头的股票
-        valid_stocks = []
-        for col in df_stock.columns:
-            if col != 'valuation_date':
-                # 检查股票代码开头
-                if (col.startswith('00') or col.startswith('60') or 
-                    col.startswith('68') or col.startswith('30')):
-                    valid_stocks.append(col)
-        
-        # 只保留符合条件的股票列
-        df_stock = df_stock[['valuation_date'] + valid_stocks]
-
-        # 设置日期为索引以便进行时间序列操作
-        df_stock.set_index('valuation_date', inplace=True)
-
-        # 创建结果DataFrame
-        result = pd.DataFrame(index=df_stock.index)
-
-        # 对每只股票计算涨跌停信号
-        for col in df_stock.columns:
-            # 获取收益率序列（已经是百分比形式）
-            returns = df_stock[col]
-            
-            # 根据股票代码开头确定涨跌停阈值
-            if col.startswith('00') or col.startswith('60'):
-                limit_threshold = 0.095  # 9.5%
-            elif col.startswith('68') or col.startswith('30'):
-                limit_threshold = 0.195 # 19.5%
-            else:
-                continue  # 跳过不符合条件的股票
-
-            # 计算涨跌停信号
-            signal = pd.Series(0, index=returns.index)
-            signal[returns >= limit_threshold] = 1    # 涨停
-            signal[returns <= -limit_threshold] = -1  # 跌停
-            # 其他情况保持为0（正常波动）
-
-            # 将信号添加到结果DataFrame
-            result[col] = signal
-
-        # 计算每天涨停和跌停的股票数量
-        limit_up_count = (result == 1).sum(axis=1)    # 涨停股票数量
-        limit_down_count = (result == -1).sum(axis=1)  # 跌停股票数量
-
-        # 计算涨跌停家数差值（正数为涨停多于跌停，负数为跌停多于涨停）
-        stock_diff = limit_up_count - limit_down_count
-
-        # 创建最终结果DataFrame
-        final_result = pd.DataFrame({
-            'valuation_date': stock_diff.index,
-            'stock_number': stock_diff
-        })
-
-        # 将日期转换回字符串格式，确保没有NaT值
-        final_result = final_result.dropna(subset=['valuation_date'])
-        final_result['valuation_date'] = final_result['valuation_date'].dt.strftime('%Y-%m-%d')
-        final_result.reset_index(inplace=True, drop=True)
-        return final_result
 
     def stock_rsi(self):
         """
@@ -1542,27 +1431,6 @@ class data_processing:
         df.dropna(inplace=True)
         df.reset_index(inplace=True,drop=True)
         return df
-    def targetIndex_RSI(self):
-        """
-        计算目标指数的RSI指标
-        
-        基于target_index计算14日RSI
-        
-        Returns:
-        --------
-        pd.DataFrame
-            包含以下列的DataFrame：
-            - valuation_date: 日期，格式为 'YYYY-MM-DD'
-            - RSI: RSI值（0-100之间）
-        """
-        df=self.dp.target_index()
-        df.dropna(inplace=True)
-        df=df[['valuation_date','target_index']]
-        df['RSI'] = ta.rsi(df['target_index'],14)
-        df.dropna(inplace=True)
-        df.reset_index(inplace=True,drop=True)
-        df = df[['valuation_date', 'RSI']]
-        return df
     def targetIndex_BOLLBAND(self):
         """
         计算目标指数的布林带指标
@@ -1618,6 +1486,28 @@ class data_processing:
         df.columns=['valuation_date','TargetIndex_MOMENTUM']
         return df
     def TargetIndex_MOMENTUM2(self):
+        """
+        计算目标指数动量2（15日收益率差值）
+
+        计算上证50和中证2000过去15天的收益率累加，
+        然后计算它们的差值作为动量指标。
+
+        计算逻辑：
+        1. 分别获取上证50和中证2000的日收益率
+        2. 对各指数计算15日滚动求和
+        3. 差值 = 上证50的15日累计收益 - 中证2000的15日累计收益
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - TargetIndex_MOMENTUM: 动量差值
+
+        说明：
+            - 正值表示上证50近期强于中证2000（大盘动量强）
+            - 负值表示中证2000近期强于上证50（小盘动量强）
+        """
         df = self.dp.index_return_withdraw()
         df = df[['valuation_date', '上证50', '中证2000']]
         df.dropna(inplace=True)
@@ -2499,6 +2389,434 @@ class data_processing:
         # 格式化输出
         result_df['valuation_date'] = result_df['valuation_date'].dt.strftime('%Y-%m-%d')
         return result_df[['valuation_date', 'earnings_season']]
+
+    # ======================== 期权因子 ========================
+    def _classify_option_by_index(self, code):
+        """
+        根据期权代码分类为大盘或小盘期权
+
+        Parameters:
+        -----------
+        code : str
+            期权代码
+
+        Returns:
+        --------
+        str
+            'big' (大盘: HO上证50ETF期权, IO沪深300股指期权)
+            'small' (小盘: MO中证1000股指期权)
+            'unknown' (未知)
+        """
+        code_upper = str(code).upper()
+        if code_upper.startswith('HO') or code_upper.startswith('IO'):
+            return 'big'
+        elif code_upper.startswith('MO'):
+            return 'small'
+        else:
+            return 'unknown'
+
+    def _calculate_option_PCR(self, value_col, output_col):
+        """
+        计算期权认沽认购比率差值的通用方法
+
+        Parameters:
+        -----------
+        value_col : str
+            用于计算PCR的列名（'oi', 'amt', 'volume'）
+        output_col : str
+            输出列名
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含 valuation_date 和 output_col 列的DataFrame
+        """
+        df = self.dp.raw_optionData_withdraw()
+
+        # 分类大盘/小盘期权
+        df['index_type'] = df['code'].apply(self._classify_option_by_index)
+        df = df[df['index_type'] != 'unknown']
+
+        # 区分认购和认沽期权
+        df['option_type'] = df['delta'].apply(lambda x: 'call' if x > 0 else 'put' if x < 0 else 'unknown')
+        df = df[df['option_type'] != 'unknown']
+
+        # 确保value_col列存在且为数值类型
+        if value_col not in df.columns:
+            raise ValueError(f"列 {value_col} 不存在于期权数据中")
+        df[value_col] = pd.to_numeric(df[value_col], errors='coerce')
+
+        # 按日期、指数类型、期权类型汇总
+        df_grouped = df.groupby(['valuation_date', 'index_type', 'option_type'])[value_col].sum().unstack(fill_value=0)
+        df_grouped.reset_index(inplace=True)
+
+        # 计算各自的PCR
+        if 'put' in df_grouped.columns and 'call' in df_grouped.columns:
+            df_grouped['PCR'] = df_grouped['put'] / df_grouped['call'].replace(0, np.nan)
+        else:
+            df_grouped['PCR'] = np.nan
+
+        # 分离大盘和小盘
+        df_big = df_grouped[df_grouped['index_type'] == 'big'][['valuation_date', 'PCR']].copy()
+        df_big.columns = ['valuation_date', 'PCR_big']
+        df_small = df_grouped[df_grouped['index_type'] == 'small'][['valuation_date', 'PCR']].copy()
+        df_small.columns = ['valuation_date', 'PCR_small']
+
+        # 合并计算差值
+        df_final = df_big.merge(df_small, on='valuation_date', how='inner')
+        df_final[output_col] = df_final['PCR_big'] - df_final['PCR_small']
+        df_final = df_final[['valuation_date', output_col]]
+        df_final.dropna(inplace=True)
+        df_final.reset_index(drop=True, inplace=True)
+
+        return df_final
+
+    def option_PCR_OI(self):
+        """
+        计算基于持仓量的期权认沽认购比率差值（大盘PCR - 小盘PCR）
+
+        PCR = 认沽期权持仓量 / 认购期权持仓量
+        分别计算大盘期权（HO、IO）和小盘期权（MO）的PCR，然后取差值：
+        - 差值 > 0: 大盘期权更恐慌 → 超跌反弹逻辑 → 买大盘
+        - 差值 < 0: 小盘期权更恐慌 → 超跌反弹逻辑 → 买小盘
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - option_PCR_OI: 大盘PCR - 小盘PCR（基于持仓量）
+        """
+        return self._calculate_option_PCR('oi', 'option_PCR_OI')
+
+    def option_PCR_Amt(self):
+        """
+        计算基于成交额的期权认沽认购比率差值（大盘PCR - 小盘PCR）
+
+        PCR = 认沽期权成交额 / 认购期权成交额
+        分别计算大盘期权（HO、IO）和小盘期权（MO）的PCR，然后取差值：
+        - 差值 > 0: 大盘期权更恐慌 → 超跌反弹逻辑 → 买大盘
+        - 差值 < 0: 小盘期权更恐慌 → 超跌反弹逻辑 → 买小盘
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - option_PCR_Amt: 大盘PCR - 小盘PCR（基于成交额）
+        """
+        return self._calculate_option_PCR('amt', 'option_PCR_Amt')
+
+    def option_PCR_Volume(self):
+        """
+        计算基于成交量的期权认沽认购比率差值（大盘PCR - 小盘PCR）
+
+        PCR = 认沽期权成交量 / 认购期权成交量
+        分别计算大盘期权（HO、IO）和小盘期权（MO）的PCR，然后取差值：
+        - 差值 > 0: 大盘期权更恐慌 → 超跌反弹逻辑 → 买大盘
+        - 差值 < 0: 小盘期权更恐慌 → 超跌反弹逻辑 → 买小盘
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - option_PCR_Volume: 大盘PCR - 小盘PCR（基于成交量）
+        """
+        return self._calculate_option_PCR('volume', 'option_PCR_Volume')
+
+    def option_IV(self):
+        """
+        计算期权隐含波动率差值（大盘IV - 小盘IV）
+
+        分别计算大盘期权（HO、IO）和小盘期权（MO）的平均隐含波动率，然后取差值：
+        - 差值 > 0: 大盘期权波动率更高 → 超跌反弹逻辑 → 买大盘
+        - 差值 < 0: 小盘期权波动率更高 → 超跌反弹逻辑 → 买小盘
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - option_IV: 大盘平均IV - 小盘平均IV
+        """
+        df = self.dp.raw_optionData_withdraw()
+
+        # 分类大盘/小盘期权
+        df['index_type'] = df['code'].apply(self._classify_option_by_index)
+        df = df[df['index_type'] != 'unknown']
+
+        # 确保implied_vol为数值类型
+        df['implied_vol'] = pd.to_numeric(df['implied_vol'], errors='coerce')
+
+        # 按日期和指数类型计算平均隐含波动率
+        df_iv = df.groupby(['valuation_date', 'index_type'])['implied_vol'].mean().unstack()
+        df_iv.reset_index(inplace=True)
+
+        # 计算差值
+        if 'big' in df_iv.columns and 'small' in df_iv.columns:
+            df_iv['option_IV'] = df_iv['big'] - df_iv['small']
+        else:
+            df_iv['option_IV'] = np.nan
+
+        df_final = df_iv[['valuation_date', 'option_IV']].copy()
+        df_final.dropna(inplace=True)
+        df_final.reset_index(drop=True, inplace=True)
+
+        return df_final
+
+    def option_IVSkew(self):
+        """
+        计算期权波动率偏度差值（大盘IVSkew - 小盘IVSkew）
+
+        波动率偏度 = 认沽期权平均IV - 认购期权平均IV
+        分别计算大盘和小盘的IVSkew，然后取差值：
+        - 差值 > 0: 大盘的看跌情绪相对更强 → 超跌反弹逻辑 → 买大盘
+        - 差值 < 0: 小盘的看跌情绪相对更强 → 超跌反弹逻辑 → 买小盘
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - option_IVSkew: 大盘IVSkew - 小盘IVSkew
+        """
+        df = self.dp.raw_optionData_withdraw()
+
+        # 分类大盘/小盘期权
+        df['index_type'] = df['code'].apply(self._classify_option_by_index)
+        df = df[df['index_type'] != 'unknown']
+
+        # 区分认购和认沽期权
+        df['option_type'] = df['delta'].apply(lambda x: 'call' if x > 0 else 'put' if x < 0 else 'unknown')
+        df = df[df['option_type'] != 'unknown']
+
+        # 确保implied_vol为数值类型
+        df['implied_vol'] = pd.to_numeric(df['implied_vol'], errors='coerce')
+
+        # 按日期、指数类型、期权类型计算平均IV
+        df_iv = df.groupby(['valuation_date', 'index_type', 'option_type'])['implied_vol'].mean().unstack()
+        df_iv.reset_index(inplace=True)
+
+        # 计算各自的IVSkew
+        if 'put' in df_iv.columns and 'call' in df_iv.columns:
+            df_iv['IVSkew'] = df_iv['put'] - df_iv['call']
+        else:
+            df_iv['IVSkew'] = np.nan
+
+        # 分离大盘和小盘
+        df_big = df_iv[df_iv['index_type'] == 'big'][['valuation_date', 'IVSkew']].copy()
+        df_big.columns = ['valuation_date', 'IVSkew_big']
+        df_small = df_iv[df_iv['index_type'] == 'small'][['valuation_date', 'IVSkew']].copy()
+        df_small.columns = ['valuation_date', 'IVSkew_small']
+
+        # 合并计算差值
+        df_final = df_big.merge(df_small, on='valuation_date', how='inner')
+        df_final['option_IVSkew'] = df_final['IVSkew_big'] - df_final['IVSkew_small']
+        df_final = df_final[['valuation_date', 'option_IVSkew']]
+        df_final.dropna(inplace=True)
+        df_final.reset_index(drop=True, inplace=True)
+
+        return df_final
+
+    def option_IV_Chg(self):
+        """
+        计算期权隐含波动率变化率差值（大盘IV变化率 - 小盘IV变化率）
+
+        IV变化率 = (当日IV - 前N日IV均值) / 前N日IV均值
+        捕捉波动率的边际变化，反映恐慌情绪的升温或降温：
+        - 差值 > 0: 大盘期权IV上升更快 → 大盘恐慌升温 → 买大盘
+        - 差值 < 0: 小盘期权IV上升更快 → 小盘恐慌升温 → 买小盘
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - option_IV_Chg: 大盘IV变化率 - 小盘IV变化率
+        """
+        df = self.dp.raw_optionData_withdraw()
+
+        # 分类大盘/小盘期权
+        df['index_type'] = df['code'].apply(self._classify_option_by_index)
+        df = df[df['index_type'] != 'unknown']
+
+        # 确保implied_vol为数值类型
+        df['implied_vol'] = pd.to_numeric(df['implied_vol'], errors='coerce')
+
+        # 按日期和指数类型计算平均IV
+        df_iv = df.groupby(['valuation_date', 'index_type'])['implied_vol'].mean().unstack()
+        df_iv.reset_index(inplace=True)
+        df_iv = df_iv.sort_values('valuation_date')
+
+        # 计算IV的5日变化率
+        if 'big' in df_iv.columns and 'small' in df_iv.columns:
+            df_iv['big_ma5'] = df_iv['big'].rolling(5).mean()
+            df_iv['small_ma5'] = df_iv['small'].rolling(5).mean()
+            df_iv['big_chg'] = (df_iv['big'] - df_iv['big_ma5']) / df_iv['big_ma5']
+            df_iv['small_chg'] = (df_iv['small'] - df_iv['small_ma5']) / df_iv['small_ma5']
+            df_iv['option_IV_Chg'] = df_iv['big_chg'] - df_iv['small_chg']
+        else:
+            df_iv['option_IV_Chg'] = np.nan
+
+        df_final = df_iv[['valuation_date', 'option_IV_Chg']].copy()
+        df_final.dropna(inplace=True)
+        df_final.reset_index(drop=True, inplace=True)
+
+        return df_final
+
+    def option_OI_Chg(self):
+        """
+        计算期权持仓量变化率差值（大盘OI变化率 - 小盘OI变化率）
+
+        OI变化率 = (当日OI - 前日OI) / 前日OI
+        反映资金进出方向：
+        - 差值 > 0: 大盘期权资金流入更多 → 大盘关注度上升 → 买大盘
+        - 差值 < 0: 小盘期权资金流入更多 → 小盘关注度上升 → 买小盘
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - option_OI_Chg: 大盘OI变化率 - 小盘OI变化率
+        """
+        df = self.dp.raw_optionData_withdraw()
+
+        # 分类大盘/小盘期权
+        df['index_type'] = df['code'].apply(self._classify_option_by_index)
+        df = df[df['index_type'] != 'unknown']
+
+        # 确保oi为数值类型
+        df['oi'] = pd.to_numeric(df['oi'], errors='coerce')
+
+        # 按日期和指数类型汇总持仓量
+        df_oi = df.groupby(['valuation_date', 'index_type'])['oi'].sum().unstack()
+        df_oi.reset_index(inplace=True)
+        df_oi = df_oi.sort_values('valuation_date')
+
+        # 计算OI变化率
+        if 'big' in df_oi.columns and 'small' in df_oi.columns:
+            df_oi['big_chg'] = df_oi['big'].pct_change()
+            df_oi['small_chg'] = df_oi['small'].pct_change()
+            df_oi['option_OI_Chg'] = df_oi['big_chg'] - df_oi['small_chg']
+        else:
+            df_oi['option_OI_Chg'] = np.nan
+
+        df_final = df_oi[['valuation_date', 'option_OI_Chg']].copy()
+        df_final.dropna(inplace=True)
+        df_final.reset_index(drop=True, inplace=True)
+
+        return df_final
+
+    def option_Turnover(self):
+        """
+        计算期权换手率差值（大盘换手率 - 小盘换手率）
+
+        换手率 = 成交量 / 持仓量
+        反映市场活跃度：
+        - 差值 > 0: 大盘期权更活跃 → 大盘交易热度高 → 买大盘
+        - 差值 < 0: 小盘期权更活跃 → 小盘交易热度高 → 买小盘
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - option_Turnover: 大盘换手率 - 小盘换手率
+        """
+        df = self.dp.raw_optionData_withdraw()
+
+        # 分类大盘/小盘期权
+        df['index_type'] = df['code'].apply(self._classify_option_by_index)
+        df = df[df['index_type'] != 'unknown']
+
+        # 确保数值类型
+        df['volume'] = pd.to_numeric(df['volume'], errors='coerce')
+        df['oi'] = pd.to_numeric(df['oi'], errors='coerce')
+
+        # 按日期和指数类型汇总
+        df_grouped = df.groupby(['valuation_date', 'index_type']).agg({
+            'volume': 'sum',
+            'oi': 'sum'
+        }).reset_index()
+
+        # 计算换手率
+        df_grouped['turnover'] = df_grouped['volume'] / df_grouped['oi'].replace(0, np.nan)
+
+        # 透视表
+        df_pivot = df_grouped.pivot(index='valuation_date', columns='index_type', values='turnover')
+        df_pivot.reset_index(inplace=True)
+
+        # 计算差值
+        if 'big' in df_pivot.columns and 'small' in df_pivot.columns:
+            df_pivot['option_Turnover'] = df_pivot['big'] - df_pivot['small']
+        else:
+            df_pivot['option_Turnover'] = np.nan
+
+        df_final = df_pivot[['valuation_date', 'option_Turnover']].copy()
+        df_final.dropna(inplace=True)
+        df_final.reset_index(drop=True, inplace=True)
+
+        return df_final
+
+    def option_CallPut_Spread(self):
+        """
+        计算认购认沽涨跌幅差值的大小盘差异
+
+        CallPut_Spread = 认购期权平均涨跌幅 - 认沽期权平均涨跌幅
+        然后计算大盘和小盘的差值：
+        - 差值 > 0: 大盘认购相对认沽表现更好 → 大盘多头更强 → 买大盘
+        - 差值 < 0: 小盘认购相对认沽表现更好 → 小盘多头更强 → 买小盘
+
+        注意：涨跌幅使用结算价(settle/pre_settle)计算，更稳定准确
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - option_CallPut_Spread: 大盘CallPut_Spread - 小盘CallPut_Spread
+        """
+        df = self.dp.raw_optionData_withdraw()
+
+        # 分类大盘/小盘期权
+        df['index_type'] = df['code'].apply(self._classify_option_by_index)
+        df = df[df['index_type'] != 'unknown']
+
+        # 区分认购和认沽期权
+        df['option_type'] = df['delta'].apply(lambda x: 'call' if x > 0 else 'put' if x < 0 else 'unknown')
+        df = df[df['option_type'] != 'unknown']
+
+        # 使用结算价计算涨跌幅
+        df['settle'] = pd.to_numeric(df['settle'], errors='coerce')
+        df['pre_settle'] = pd.to_numeric(df['pre_settle'], errors='coerce')
+        df['pct_chg'] = (df['settle'] - df['pre_settle']) / df['pre_settle']
+
+        # 按日期、指数类型、期权类型计算平均涨跌幅
+        df_pct = df.groupby(['valuation_date', 'index_type', 'option_type'])['pct_chg'].mean().unstack()
+        df_pct.reset_index(inplace=True)
+
+        # 计算CallPut_Spread
+        if 'call' in df_pct.columns and 'put' in df_pct.columns:
+            df_pct['spread'] = df_pct['call'] - df_pct['put']
+        else:
+            df_pct['spread'] = np.nan
+
+        # 分离大盘和小盘
+        df_big = df_pct[df_pct['index_type'] == 'big'][['valuation_date', 'spread']].copy()
+        df_big.columns = ['valuation_date', 'spread_big']
+        df_small = df_pct[df_pct['index_type'] == 'small'][['valuation_date', 'spread']].copy()
+        df_small.columns = ['valuation_date', 'spread_small']
+
+        # 合并计算差值
+        df_final = df_big.merge(df_small, on='valuation_date', how='inner')
+        df_final['option_CallPut_Spread'] = df_final['spread_big'] - df_final['spread_small']
+        df_final = df_final[['valuation_date', 'option_CallPut_Spread']]
+        df_final.dropna(inplace=True)
+        df_final.reset_index(drop=True, inplace=True)
+
+        return df_final
 
 
 if __name__ == "__main__":

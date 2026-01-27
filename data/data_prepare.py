@@ -586,14 +586,16 @@ class data_prepare:
 
     def raw_PS_withdraw(self):
         """
-        获取PMI（采购经理人指数）数据
+        获取市销率（P/S）数据
+
+        计算上证50与中证1000的市销率差值
 
         Returns:
         --------
         pd.DataFrame
             包含以下列的DataFrame：
             - valuation_date: 日期，格式为 'YYYY-MM-DD'
-            - PMI: PMI指数值
+            - value: P/S差值（上证50 - 中证1000）
         """
         inputpath = glv.get('raw_indexbasic_wind')
         inputpath=str(inputpath)+ f" Where trade_date between '{self.start_date}' and '{self.end_date}'"
@@ -611,14 +613,16 @@ class data_prepare:
         return df1
     def raw_PCF_withdraw(self):
         """
-        获取PMI（采购经理人指数）数据
+        获取市现率（P/CF）数据
+
+        计算上证50与中证1000的市现率（经营性现金流TTM加权）差值
 
         Returns:
         --------
         pd.DataFrame
             包含以下列的DataFrame：
             - valuation_date: 日期，格式为 'YYYY-MM-DD'
-            - PMI: PMI指数值
+            - value: P/CF差值（上证50 - 中证1000）
         """
         inputpath = glv.get('raw_indexbasic_wind')
         inputpath=str(inputpath)+ f" Where trade_date between '{self.start_date}' and '{self.end_date}'"
@@ -636,14 +640,16 @@ class data_prepare:
         return df1
     def raw_NetProfit_withdraw(self):
         """
-        获取PMI（采购经理人指数）数据
+        获取净利润预期增速（YoY）数据
+
+        计算上证50与沪深300的一致预期净利润同比增速平均值
 
         Returns:
         --------
         pd.DataFrame
             包含以下列的DataFrame：
             - valuation_date: 日期，格式为 'YYYY-MM-DD'
-            - PMI: PMI指数值
+            - value: 净利润YoY平均值（(上证50 + 沪深300) / 2）
         """
         inputpath = glv.get('raw_indexpredictbasic')
         inputpath = str(inputpath) + f" Where trade_date between '{self.start_date}' and '{self.end_date}'"
@@ -661,14 +667,16 @@ class data_prepare:
         return df1
     def raw_IPO(self):
         """
-        获取PMI（采购经理人指数）数据
+        获取IPO首发筹资金额数据
+
+        从CSV文件读取沪深股市首发A股筹资金额当月值数据
 
         Returns:
         --------
         pd.DataFrame
             包含以下列的DataFrame：
             - valuation_date: 日期，格式为 'YYYY-MM-DD'
-            - PMI: PMI指数值
+            - value: IPO首发筹资金额
         """
         inputpath = 'D:\Data_prepared_new\沪深股市_首发A股筹资金额_当月值.csv'
         df1 = gt.readcsv(inputpath)
@@ -695,14 +703,14 @@ class data_prepare:
         # return df1
     def raw_socialfinance(self):
         """
-        获取CPI（居民消费价格指数）数据
+        获取社会融资规模存量数据
 
         Returns:
         --------
         pd.DataFrame
             包含以下列的DataFrame：
             - valuation_date: 日期，格式为 'YYYY-MM-DD'
-            - CPI: CPI指数值
+            - SocialFinance: 社会融资规模存量值
         """
         inputpath = glv.get('raw_socialfinance')
         signal_name = 'SocialFinance'
@@ -719,6 +727,22 @@ class data_prepare:
         #self._check_working_days_completeness(df1, 'raw_socialfinance')
         return df1
     def raw_CopperGold(self):
+        """
+        获取铜金比数据
+
+        计算铜与黄金的价格比值，用于判断经济周期
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - value: 铜金比（Copper / Gold）
+
+        说明:
+            铜金比上升通常表示经济扩张预期增强
+            铜金比下降通常表示避险情绪上升
+        """
         inputpath = glv.get('raw_CopperGold')
         signal_name = 'Copper'
         ori_name = self.rename_code_by_folder_wind(signal_name)
@@ -747,6 +771,18 @@ class data_prepare:
         df_final.reset_index(inplace=True, drop=True)
         return df_final
     def raw_BMCI(self):
+        """
+        获取BMCI（波罗的海商品综合指数）数据
+
+        计算28日移动平均值
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - value: BMCI指数28日均值
+        """
         start_date=pd.to_datetime(self.start_date)- pd.DateOffset(months=2)
         start_date=gt.strdate_transfer(start_date)
         inputpath = glv.get('raw_BMCI')
@@ -768,16 +804,24 @@ class data_prepare:
         # 检查工作日完整性
         self._check_working_days_completeness(df1, 'raw_BMCI')
         return df1
-    def raw_usrmb(self):
-        inputpath="D:\Data_prepared_new\基准汇率_美元兑人民币.csv"
-        df1=gt.readcsv(inputpath)
-        df1['valuation_date'] = pd.to_datetime(df1['valuation_date'])
-        df1['valuation_date'] = df1['valuation_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
-        df1.sort_values('valuation_date', ascending=True, inplace=True)
-        df1 = df1[df1['valuation_date'].isin(self.working_days_list)]
-        df1.fillna('ffill',inplace=True)
-        return df1
     def raw_usbond(self,period):
+        """
+        获取中美国债利差数据
+
+        计算中国国债与美国国债收益率的利差
+
+        Parameters:
+        -----------
+        period : str
+            期限，如 '3Y'（3年）或 '10Y'（10年）
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - value: 中美利差（中国国债收益率 - 美国国债收益率）
+        """
         inputpath=glv.get('raw_usbond')
         signal_name = 'usbond_' + str(period)
         ori_name = self.rename_code_by_folder_wind(signal_name)
@@ -812,6 +856,29 @@ class data_prepare:
         self._check_working_days_completeness(df, 'raw_usbond')
         return df
     def raw_fund(self):
+        """
+        获取ETF资金流向数据
+
+        计算大盘ETF（沪深300/上证50）与小盘ETF（中证1000/中证2000）的资金流向差异
+
+        计算逻辑：
+        1. 获取各ETF的份额和收盘价数据
+        2. 计算资金流向 = 当日份额 - 前日份额
+        3. 分别计算大盘和小盘ETF的平均资金流向
+        4. 差值 = 大盘资金流向 - 小盘资金流向（10日滚动求和）
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - value: 大小盘ETF资金流向差异（10日滚动求和）
+
+        Note:
+        -----
+        2023-10-01之前使用中证500/中证1000作为小盘代表
+        2023-10-01之后使用中证1000/中证2000作为小盘代表
+        """
         hs300_sz50_etf_codes_full = [
             # 沪深300（规模/流动性双第一梯队）
             '510300.SH', '510310.SH',
@@ -892,6 +959,18 @@ class data_prepare:
         self._check_working_days_completeness(df1, 'raw_fund')
         return df_final
     def raw_DBI(self):
+        """
+        获取DBI（干散货指数）数据
+
+        计算28日移动平均值
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - value: DBI指数28日均值
+        """
         start_date = pd.to_datetime(self.start_date) - pd.DateOffset(months=2)
         start_date = gt.strdate_transfer(start_date)
         inputpath=glv.get('raw_DBI')
@@ -914,6 +993,18 @@ class data_prepare:
         self._check_working_days_completeness(df1, 'raw_DBI')
         return df1
     def raw_PCT(self):
+        """
+        获取PCT（太平洋集装箱运价指数）数据
+
+        计算28日移动平均值
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - value: PCT指数28日均值
+        """
         start_date = pd.to_datetime(self.start_date) - pd.DateOffset(months=2)
         start_date = gt.strdate_transfer(start_date)
         inputpath = glv.get('raw_PCT')
@@ -936,6 +1027,18 @@ class data_prepare:
         self._check_working_days_completeness(df1, 'raw_PCT')
         return df1
     def raw_PTA(self):
+        """
+        获取PTA（精对苯二甲酸）经济指标数据
+
+        从CSV文件读取多个PTA相关指标，计算均值和28日移动平均
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - value: PTA相关指标均值的28日移动平均
+        """
         inputpath='D:\选用的经济增长指标\\PTA.csv'
         df1=pd.read_csv(inputpath,encoding='gbk')
         df1.sort_values('valuation_date',ascending=True,inplace=True)
@@ -1104,6 +1207,19 @@ class data_prepare:
         self._check_working_days_completeness(df1, 'raw_index_volume')
         return df1
     def raw_internationalIndex(self):
+        """
+        获取国际指数数据
+
+        获取道琼斯工业指数(DJI)和罗素2000指数(RUT)的累计收益数据
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - DJI: 道琼斯工业指数累计收益（净值化）
+            - RUT: 罗素2000指数累计收益（净值化）
+        """
         df_final=pd.DataFrame()
         df_final['valuation_date']=self.working_days_list
         inputpath=glv.get('raw_intindex')
@@ -1331,6 +1447,28 @@ class data_prepare:
         self._check_working_days_completeness(df, 'raw_indexBasic')
         return df
     def target_index(self):
+        """
+        计算目标指数（大小盘相对强弱指数）
+
+        计算上证50与中证2000的累计收益比值，作为大小盘相对强弱的度量
+
+        计算逻辑：
+        1. 获取上证50和中证2000的日收益率
+        2. 分别计算累计收益（净值化）
+        3. target_index = 上证50净值 / 中证2000净值
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - target_index: 大小盘相对强弱指数
+            - 上证50: 上证50累计净值
+            - 中证2000: 中证2000累计净值
+
+        说明：
+            target_index 上升表示大盘走强，下降表示小盘走强
+        """
         df_return = self.index_return_withdraw()
         df_return = df_return[['valuation_date', '上证50', '中证2000']]
         df_return.set_index('valuation_date', inplace=True)
@@ -1382,44 +1520,6 @@ class data_prepare:
         self._check_working_days_completeness(df_final, 'target_index_candle')
         return df_final
 
-    def target_index_candle2(self):
-        """
-        计算目标指数的K线数据（基于沪深300和中证2000，使用不同的指数代码）
-        
-        计算沪深300与932000.CSI的差值K线（high、close、low）
-        
-        Returns:
-        --------
-        pd.DataFrame
-            包含以下列的DataFrame：
-            - valuation_date: 日期，格式为 'YYYY-MM-DD'
-            - high: 最高价差值
-            - close: 收盘价差值（沪深300收盘价 - 932000.CSI收盘价）
-            - low: 最低价差值
-        """
-        df_index = gt.indexData_withdraw(index_type=None, start_date=self.start_date, end_date=self.end_date,
-                                         columns=['close', 'high', 'low'])
-        df_close = df_index[['valuation_date', 'code', 'close']]
-        df_high = df_index[['valuation_date', 'code', 'high']]
-        df_low = df_index[['valuation_date', 'code', 'low']]
-        df_close = gt.sql_to_timeseries(df_close)
-        df_high = gt.sql_to_timeseries(df_high)
-        df_low = gt.sql_to_timeseries(df_low)
-        df_close = df_close[['valuation_date', '000016.SH', '932000.CSI']]
-        df_high = df_high[['valuation_date', '000016.SH', '932000.CSI']]
-        df_low = df_low[['valuation_date', '000016.SH', '932000.CSI']]
-        df_close.columns = ['valuation_date', '000016.SH_close', '932000.CSI_close']
-        df_high.columns = ['valuation_date', '000016.SH_high', '932000.CSI_high']
-        df_low.columns = ['valuation_date', '000016.SH_low', '932000.CSI_low']
-        df_hl = df_high.merge(df_low, on='valuation_date', how='left')
-        df_final = df_close.merge(df_hl, on='valuation_date', how='left')
-        df_final['close'] = df_final['000016.SH_close'] - df_final['932000.CSI_close']
-        df_final['high'] = df_final['000016.SH_high'] - df_final['932000.CSI_low']
-        df_final['low'] = df_final['000016.SH_low'] - df_final['932000.CSI_high']
-        df_final = df_final[['valuation_date', 'high', 'close', 'low']]
-        # 检查工作日完整性
-        self._check_working_days_completeness(df_final, 'target_index_candle2')
-        return df_final
     def future_difference_withdraw(self):
         """
         获取期货价差数据
@@ -1438,6 +1538,23 @@ class data_prepare:
         self._check_working_days_completeness(df, 'future_difference_withdraw')
         return df
     def raw_futureHolding(self):
+        """
+        获取股指期货持仓数据
+
+        获取IH、IF、IC、IM等股指期货的多空持仓数据
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - symbol: 期货品种（IH、IF、IC、IM）
+            - broker: 券商名称
+            - long_hld: 多头持仓量
+            - long_chg: 多头持仓变化
+            - short_hld: 空头持仓量
+            - short_chg: 空头持仓变化
+        """
         inputpath=glv.get('raw_futureHolding')
         inputpath = inputpath + f" WHERE trade_date between '{self.start_date}' and '{self.end_date}'"
         df=gt.data_getting(inputpath,config_path)
@@ -1593,6 +1710,32 @@ class data_prepare:
         df['valuation_date'] = df['valuation_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
         df = df[df['valuation_date'].isin(self.working_days_list)]
         return df
+
+    def raw_optionData_withdraw(self):
+        """
+        获取期权数据
+
+        使用gt.optionData_withdraw获取期权数据，包含delta、隐含波动率等信息
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - code: 期权代码
+            - delta: Delta值
+            - delta_yes: 前一交易日的Delta值
+            - implied_vol: 隐含波动率
+            - pct_chg: 涨跌幅
+        """
+        df = gt.optionData_withdraw(start_date=self.start_date, end_date=self.end_date)
+        df['valuation_date'] = pd.to_datetime(df['valuation_date'])
+        df['valuation_date'] = df['valuation_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
+        df = df[df['valuation_date'].isin(self.working_days_list)]
+        # 检查工作日完整性
+        self._check_working_days_completeness(df, 'raw_optionData_withdraw')
+        return df
+
 if __name__ == "__main__":
     dp=data_prepare('2015-01-03','2026-01-15')
     df=dp.raw_vp08score_withdraw()
