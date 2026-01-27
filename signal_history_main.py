@@ -31,11 +31,11 @@ def update_main(signal_name,start_date,end_date,signal_type_list,mode,backtest,b
             pu.portfolio_saving_main()
 if __name__ == "__main__":
     #['NLBP_difference', 'LHBProportion', 'LargeOrder_difference', 'USDX', 'USBond', 'ETF_Shares']
-    signal_name='Option' #signal_name如果为None默认跑所选的级别因子的全部
+    signal_name='SpecialFactor' #signal_name如果为None默认跑所选的级别因子的全部
     start_date='2015-01-01'
     end_date='2026-01-27'
     signal_type_list=['L3','L2','L1'] #输出需要跑的因子级别
-    mode='test'#除了生产意外其他的都是test
+    mode='prod'#除了生产意外其他的都是test
     backtest=True #看要不要回测报告
     big_indexName='上证50' #所选大盘的指数
     small_indexName='中证2000'#所选小盘的指数

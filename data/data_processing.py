@@ -336,15 +336,15 @@ class data_processing:
         """
         df_D=self.dp.raw_DJUS()
         df_N=self.dp.raw_NDAQ()
-         df_us=df_D.merge(df_N,on='valuation_date',how='outer')
-         df_us.dropna(inplace=True)
-         df_us.set_index('valuation_date', inplace=True, drop=True)
-         df_us = (1 + df_us).cumprod()
-         df_us['D/N'] = df_us['DJUS'] / df_us['NDAQ']
-         df_us.reset_index(inplace=True)
-         df_us['valuation_date']=pd.to_datetime(df_us['valuation_date'])
-         df_us['valuation_date']=df_us['valuation_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
-         return df_us
+        df_us=df_D.merge(df_N,on='valuation_date',how='outer')
+        df_us.dropna(inplace=True)
+        df_us.set_index('valuation_date', inplace=True, drop=True)
+        df_us = (1 + df_us).cumprod()
+        df_us['D/N'] = df_us['DJUS'] / df_us['NDAQ']
+        df_us.reset_index(inplace=True)
+        df_us['valuation_date']=pd.to_datetime(df_us['valuation_date'])
+        df_us['valuation_date']=df_us['valuation_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
+        return df_us
     def relativeVolume_std(self):
         """
         计算相对成交量标准差
