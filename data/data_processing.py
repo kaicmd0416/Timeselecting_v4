@@ -2242,6 +2242,108 @@ class data_processing:
         df_index.dropna(inplace=True)
         return df_index
 
+    def commodity_updown_spread(self):
+        """
+        计算上游/中下游商品价差比
+
+        计算逻辑：
+        1. 分别构建上游商品指数和中下游商品指数
+        2. 计算上游/中下游比值的变化率
+
+        信号逻辑：
+        - 比值上升 = 上游涨幅大于中下游 = 原材料涨价压缩下游利润 = 小盘承压
+        - 比值下降 = 中下游涨幅大于上游 = 下游利润修复 = 小盘占优
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - value: 上游/中下游指数比值
+        """
+        df_commodity = self.dp.raw_futureData_commodity()
+        if df_commodity.empty:
+            print("警告: commodity_updown_spread - 商品期货数据为空")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        df_main = self._get_commodity_main_contracts(df_commodity)
+        if df_main.empty:
+            print("警告: commodity_updown_spread - 未找到主力连续合约数据")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        # 分别构建上游和中下游指数
+        df_upside = self._build_commodity_index(df_main, self.COMMODITY_UPSIDE)
+        df_downside = self._build_commodity_index(df_main, self.COMMODITY_DOWNSIDE)
+
+        if df_upside.empty or df_downside.empty:
+            print("警告: commodity_updown_spread - 上游或中下游指数为空")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        # 合并数据
+        df_upside.columns = ['valuation_date', 'upside']
+        df_downside.columns = ['valuation_date', 'downside']
+        df_merged = df_upside.merge(df_downside, on='valuation_date', how='inner')
+
+        # 计算上游/中下游比值
+        df_merged['spread'] = df_merged['upside'] / df_merged['downside']
+
+        df_result = df_merged[['valuation_date', 'spread']].copy()
+        df_result.columns = ['valuation_date', 'value']
+        df_result.dropna(inplace=True)
+
+        return df_result
+
+    def commodity_volatility(self):
+        """
+        计算商品综合指数波动率
+
+        计算逻辑：
+        1. 构建商品综合指数
+        2. 计算指数日收益率
+        3. 计算20日滚动波动率（标准差）
+
+        信号逻辑：
+        - 波动率上升 = 市场不确定性增加 = 风险偏好下降 = 大盘占优
+        - 波动率下降 = 市场稳定 = 风险偏好上升 = 小盘占优
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - value: 20日滚动波动率
+        """
+        df_commodity = self.dp.raw_futureData_commodity()
+        if df_commodity.empty:
+            print("警告: commodity_volatility - 商品期货数据为空")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        df_main = self._get_commodity_main_contracts(df_commodity)
+        if df_main.empty:
+            print("警告: commodity_volatility - 未找到主力连续合约数据")
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        # 构建综合指数
+        all_symbols = self.COMMODITY_UPSIDE + self.COMMODITY_DOWNSIDE
+        df_index = self._build_commodity_index(df_main, all_symbols)
+
+        if df_index.empty:
+            return pd.DataFrame(columns=['valuation_date', 'value'])
+
+        df_index = df_index.sort_values('valuation_date')
+
+        # 计算日收益率
+        df_index['return'] = df_index['value'].pct_change()
+
+        # 计算20日滚动波动率
+        df_index['volatility'] = df_index['return'].rolling(20).std()
+
+        df_result = df_index[['valuation_date', 'volatility']].copy()
+        df_result.columns = ['valuation_date', 'value']
+        df_result.dropna(inplace=True)
+
+        return df_result
+
     # ======================== 季节性因子 ========================
 
     def _get_holiday_periods(self, min_length=5):

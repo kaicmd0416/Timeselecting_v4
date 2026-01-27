@@ -30,8 +30,8 @@ def update_main(signal_name,start_date,end_date,signal_type_list,mode,backtest,b
             pu = portfolio_updating(date)
             pu.portfolio_saving_main()
 if __name__ == "__main__":
-    #['NLBP_difference', 'LHBProportion', 'LargeOrder_difference', 'USDX', 'USBond', 'ETF_Shares']
-    signal_name='SpecialFactor' #signal_name如果为None默认跑所选的级别因子的全部
+    #['Commodity_UpDown_Spread', 'Commodity_OI_Change', 'Commodity_Volatility']
+    signal_name='Commodity' #signal_name如果为None默认跑所选的级别因子的全部
     start_date='2015-01-01'
     end_date='2026-01-27'
     signal_type_list=['L3','L2','L1'] #输出需要跑的因子级别

@@ -374,6 +374,12 @@ class L3_signalConstruction:
         elif self.signal_name=='Commodity_Composite':
             df=self.dpro.commodity_composite()
             sc_mode='mode_1'  # 正向：同比上行→大盘占优
+        elif self.signal_name=='Commodity_UpDown_Spread':
+            df=self.dpro.commodity_updown_spread()
+            sc_mode='mode_1'  # 长周期正向：上游/中下游比值上升→大盘占优
+        elif self.signal_name=='Commodity_Volatility':
+            df=self.dpro.commodity_volatility()
+            sc_mode='mode_2'  # 长周期反向：波动率上升→小盘占优
         # ======================== 期权因子 ========================
         elif self.signal_name=='Option_PCR_OI':
             df=self.dpro.option_PCR_OI()
@@ -651,6 +657,7 @@ if __name__ == "__main__":
         - Commodity_Upside, Commodity_Downside
         - Commodity_Volume, Commodity_PPI_Correl
         - Commodity_Composite
+        - Commodity_UpDown_Spread, Commodity_Volatility
 
     期权因子类 (Option):
         - Option_PCR_OI, Option_PCR_Amt, Option_PCR_Volume

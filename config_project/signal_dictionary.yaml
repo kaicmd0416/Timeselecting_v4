@@ -224,6 +224,18 @@ Commodity_Composite:
   L2_factor: CommodityIndex
   L3_factor: Commodity_Composite
 
+# 新增：上下游价差因子
+Commodity_UpDown_Spread:
+  L1_factor: Commodity
+  L2_factor: Commodity_UpDown_Spread
+  L3_factor: Commodity_UpDown_Spread
+
+# 新增：波动率因子
+Commodity_Volatility:
+  L1_factor: Commodity
+  L2_factor: Commodity_Volatility
+  L3_factor: Commodity_Volatility
+
 # ======================== 期权因子 ========================
 # PCR因子（高相关性，共用L2）
 Option_PCR_OI:
