@@ -408,6 +408,13 @@ class L3_signalConstruction:
         elif self.signal_name=='Option_CallPut_Spread':
             df=self.dpro.option_CallPut_Spread()
             sc_mode='mode_8'  # 短周期均线正向：大盘认购认沽涨跌差-小盘，差值高→大盘多头更强→买大盘
+        # ======================== 港股联动因子 ========================
+        elif self.signal_name=='HK_HSI_Momentum':
+            df=self.dpro.hk_hsi_momentum()
+            sc_mode='mode_8'  # 长周期均线正向：恒生指数强势→外资风险偏好高→买大盘
+        elif self.signal_name=='HK_HSTECH_Momentum':
+            df=self.dpro.hk_hstech_momentum()
+            sc_mode='mode_9'  # 长周期均线反向：恒生科技强势→成长风格占优→买小盘
         else:
             print('signal_name还没有纳入系统')
             raise ValueError

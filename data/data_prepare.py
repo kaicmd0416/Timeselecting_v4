@@ -1736,6 +1736,53 @@ class data_prepare:
         self._check_working_days_completeness(df, 'raw_optionData_withdraw')
         return df
 
+    def raw_hk_index(self, index_type='HSI'):
+        """
+        获取港股指数数据（恒生指数、恒生科技指数、恒生AH股溢价指数）
+
+        从tusharedb.index_global表获取港股指数数据
+        注意：港股和A股交易日历不同，港股休市时用前值填充
+
+        Parameters:
+        -----------
+        index_type : str
+            指数类型，可选值：
+            - 'HSI': 恒生指数
+            - 'HKTECH': 恒生科技指数
+            - 'HKAH': 恒生AH股溢价指数
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - close: 收盘价
+            - pct_chg: 涨跌幅（百分比）
+        """
+        inputpath = glv.get('raw_intindex')
+        inputpath = str(inputpath) + f" Where trade_date between '{self.start_date}' and '{self.end_date}'"
+        df = gt.data_getting(inputpath, config_path)
+
+        # 过滤指定的港股指数
+        df = df[df['ts_code'] == index_type]
+        df = df[['trade_date', 'close', 'pct_chg']]
+        df.columns = ['valuation_date', 'close', 'pct_chg']
+        df['valuation_date'] = pd.to_datetime(df['valuation_date'])
+        df['valuation_date'] = df['valuation_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
+        df = df.sort_values('valuation_date').reset_index(drop=True)
+
+        # 港股和A股交易日历不同，需要用前值填充缺失的A股工作日
+        df_full = pd.DataFrame({'valuation_date': self.working_days_list})
+        df = df_full.merge(df, on='valuation_date', how='left')
+        # close用前值填充，pct_chg缺失日设为0（当天无涨跌）
+        df['close'] = df['close'].ffill()
+        df['pct_chg'] = df['pct_chg'].fillna(0)
+        df = df.dropna(subset=['close'])  # 删除最开始没有数据的行
+
+        df = df.sort_values('valuation_date').reset_index(drop=True)
+        return df
+
+
 if __name__ == "__main__":
     dp=data_prepare('2015-01-03','2026-01-15')
     df=dp.raw_vp08score_withdraw()

@@ -2921,6 +2921,86 @@ class data_processing:
         return df_final
 
 
+    # ======================== 港股联动因子 ========================
+    def hk_hsi_momentum(self):
+        """
+        计算恒生指数动量因子
+
+        计算恒生指数与A股目标指数的相对动量差值
+        逻辑：港股强势时，外资风险偏好高，利好A股大盘
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - hk_hsi_momentum: 恒生指数动量值
+        """
+        # 获取恒生指数数据
+        df_hsi = self.dp.raw_hk_index('HSI')
+        df_hsi = df_hsi[['valuation_date', 'pct_chg']]
+        df_hsi.columns = ['valuation_date', 'hsi_pct']
+        df_hsi['hsi_pct'] = df_hsi['hsi_pct'] / 100  # 转换为小数
+
+        # 获取沪深300收益率
+        df_a = self.dp.index_return_withdraw()
+        df_a = df_a[['valuation_date', '沪深300']]
+        df_a.columns = ['valuation_date', 'a_pct']
+
+        # 合并
+        df = df_hsi.merge(df_a, on='valuation_date', how='inner')
+
+        # 计算累计收益比值作为动量
+        df['hsi_cum'] = (1 + df['hsi_pct']).cumprod()
+        df['a_cum'] = (1 + df['a_pct']).cumprod()
+        df['hk_hsi_momentum'] = df['hsi_cum'] / df['a_cum']
+
+        df = df[['valuation_date', 'hk_hsi_momentum']]
+        df.dropna(inplace=True)
+        df.reset_index(drop=True, inplace=True)
+
+        return df
+
+    def hk_hstech_momentum(self):
+        """
+        计算恒生科技指数动量因子
+
+        计算恒生科技指数与A股目标指数的相对动量差值
+        逻辑：港股科技强势时，成长风格占优，外资风险偏好高
+
+        Returns:
+        --------
+        pd.DataFrame
+            包含以下列的DataFrame：
+            - valuation_date: 日期，格式为 'YYYY-MM-DD'
+            - hk_hstech_momentum: 恒生科技指数动量值
+        """
+        # 获取恒生科技指数数据
+        df_hstech = self.dp.raw_hk_index('HKTECH')
+        df_hstech = df_hstech[['valuation_date', 'pct_chg']]
+        df_hstech.columns = ['valuation_date', 'hstech_pct']
+        df_hstech['hstech_pct'] = df_hstech['hstech_pct'] / 100  # 转换为小数
+
+        # 获取中证1000收益率（代表成长/小盘）
+        df_a = self.dp.index_return_withdraw()
+        df_a = df_a[['valuation_date', '中证1000']]
+        df_a.columns = ['valuation_date', 'a_pct']
+
+        # 合并
+        df = df_hstech.merge(df_a, on='valuation_date', how='inner')
+
+        # 计算累计收益比值作为动量
+        df['hstech_cum'] = (1 + df['hstech_pct']).cumprod()
+        df['a_cum'] = (1 + df['a_pct']).cumprod()
+        df['hk_hstech_momentum'] = df['hstech_cum'] / df['a_cum']
+
+        df = df[['valuation_date', 'hk_hstech_momentum']]
+        df.dropna(inplace=True)
+        df.reset_index(drop=True, inplace=True)
+
+        return df
+
+
 if __name__ == "__main__":
     dp = data_prepare('2015-01-03', '2026-01-15')
     df2 = dp.target_index()

@@ -287,3 +287,15 @@ Option_CallPut_Spread:
   L1_factor: Option
   L2_factor: OptionPriceSpread
   L3_factor: Option_CallPut_Spread
+
+# ======================== 港股联动因子 ========================
+# 港股动量因子（HSI和HSTECH相关性较高，共用L2）
+HK_HSI_Momentum:
+  L1_factor: StockCapital
+  L2_factor: HKStock_Momentum
+  L3_factor: HK_HSI_Momentum
+
+HK_HSTECH_Momentum:
+  L1_factor: StockCapital
+  L2_factor: HKStock_Momentum
+  L3_factor: HK_HSTECH_Momentum
