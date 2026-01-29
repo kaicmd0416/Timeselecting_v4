@@ -1115,13 +1115,8 @@ if __name__ == "__main__":
     # print(fbm.backtesting_main())
 
     # L1因子回测示例
-    factor_list = ['SpecialFactor']
+    factor_list = ['final_signal']
     for factor_name in factor_list:
-        fbm = factor_backtesting(factor_name, '2015-01-01', "2026-01-26", 0.00006, 'prod', 'L1',
+        fbm = factor_backtesting(factor_name, '2015-01-01', "2026-01-28", 0.00006, 'test', 'L0',
                                  '上证50', '中证2000', None, None)
         fbm.backtesting_main()
-
-        # L3因子回测示例（注释状态）
-        # fbm = L3factor_backtesting(factor_name, '2015-01-01', '2025-11-31', 0.00006, 'test', '上证50',
-        #                            '中证2000', 0.15, 0.15)
-        # fbm.backtesting_main()

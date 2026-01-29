@@ -61,43 +61,45 @@ class data_prepare:
         self.end_date=end_date
         self.working_days_list=gt.working_days_list(self.start_date,self.end_date)
 
-    def _check_working_days_completeness(self, df, func_name):
+    def _check_working_days_completeness(self, df, func_name, parameter=None):
         """
         检查DataFrame是否包含working_days_list中的所有工作日
-        
+
         如果数据不完整，直接抛出ValueError异常
-        
+
         根据config_checking.yaml中的effective_start_date动态调整检查的工作日列表：
         - 如果self.start_date <= effective_start_date，则使用effective_start_date到self.end_date的工作日列表
         - 否则，使用self.working_days_list
-        
+
         Parameters:
         -----------
         df : pd.DataFrame
             要检查的DataFrame
         func_name : str
             函数名称，用于错误提示和查找配置文件中的effective_start_date
-        
+        parameter : str, optional
+            参数值，用于获取参数级别的开始日期
+
         Raises:
         -------
         ValueError
             当DataFrame为空、缺少valuation_date列或缺少工作日数据时抛出异常
-        
+
         Note:
         -----
         本方法使用df.copy()创建副本，不会修改原始DataFrame的任何格式
         """
         if df is None or df.empty:
             raise ValueError(f"{func_name}: DataFrame为空")
-        
+
         if 'valuation_date' not in df.columns:
             raise ValueError(f"{func_name}: DataFrame缺少valuation_date列")
-        
+
         # 创建DataFrame副本，避免修改原始数据
         df_copy = df.copy()
-        
+
         # 从配置文件读取effective_start_date
-        effective_start_date = self._get_effective_start_date(func_name)
+        effective_start_date = self._get_effective_start_date(func_name, parameter)
         
         # 根据effective_start_date决定使用哪个工作日列表
         if effective_start_date:
@@ -136,15 +138,17 @@ class data_prepare:
                 f"缺失日期: {missing_str}"
             )
     
-    def _get_effective_start_date(self, func_name):
+    def _get_effective_start_date(self, func_name, parameter=None):
         """
         从config_checking.yaml中获取函数的effective_start_date
-        
+
         Parameters:
         -----------
         func_name : str
             函数名称
-        
+        parameter : str, optional
+            参数值，用于获取参数级别的开始日期
+
         Returns:
         --------
         str or None
@@ -154,16 +158,23 @@ class data_prepare:
             config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data_check', 'config_checking.yaml')
             with open(config_path, 'r', encoding='utf-8') as f:
                 config = yaml.safe_load(f)
-            
+
             if 'data_prepare_functions' not in config:
                 return None
-            
+
             # 先检查parameterized_functions（有参数的函数）
             if 'parameterized_functions' in config['data_prepare_functions']:
                 for func_key, func_config in config['data_prepare_functions']['parameterized_functions'].items():
                     if func_key == func_name:
+                        # 如果提供了parameter，尝试获取参数级别的日期
+                        if parameter is not None and 'parameters' in func_config:
+                            params = func_config['parameters']
+                            # 检查parameters是否为字典格式（带日期）
+                            if isinstance(params, dict) and parameter in params:
+                                return params[parameter]
+                        # 返回函数级别的默认日期
                         return func_config.get('effective_start_date')
-            
+
             # 再检查parameterless_functions（无参数的函数）
             if 'parameterless_functions' in config['data_prepare_functions']:
                 for func_config in config['data_prepare_functions']['parameterless_functions']:
@@ -173,7 +184,7 @@ class data_prepare:
                     elif func_config == func_name:
                         # 如果配置是字符串格式，返回None（需要配置文件中定义effective_start_date）
                         return None
-            
+
             return None
         except Exception as e:
             # 如果读取配置文件失败，返回None，使用默认的working_days_list
@@ -274,7 +285,7 @@ class data_prepare:
             raise ValueError('period must be 2W or 9M')
         df1 = df1[['valuation_date', signal_name]]
         # 检查工作日完整性
-        self._check_working_days_completeness(df1, 'raw_shibor')
+        self._check_working_days_completeness(df1, 'raw_shibor', period)
         return df1
     def raw_bond(self, period):
         """
@@ -311,7 +322,7 @@ class data_prepare:
             raise ValueError('period must be 3Y or 10Y')
         df1=df1[['valuation_date',signal_name]]
         # 检查工作日完整性
-        self._check_working_days_completeness(df1, 'raw_bond')
+        self._check_working_days_completeness(df1, 'raw_bond', period)
         return df1
     def raw_ZZGK(self, period):
         """
@@ -348,7 +359,7 @@ class data_prepare:
             raise ValueError('period must be 3M or9M or 1Y or 5Y or 10Y')
         df1=df1[['valuation_date',signal_name]]
         # 检查工作日完整性
-        self._check_working_days_completeness(df1, 'raw_ZZGK')
+        self._check_working_days_completeness(df1, 'raw_ZZGK', period)
         return df1
     def raw_ZZZD(self, period):
         """
@@ -386,7 +397,7 @@ class data_prepare:
             raise ValueError('period must be 9M or 3M or 5Y ')
         df1=df1[['valuation_date',signal_name]]
         # 检查工作日完整性
-        self._check_working_days_completeness(df1, 'raw_ZZZD')
+        self._check_working_days_completeness(df1, 'raw_ZZZD', period)
         return df1
     def raw_M1M2(self, signal_name):
         """
@@ -423,7 +434,7 @@ class data_prepare:
             raise ValueError('type must be M1 or M2')
         df1=df1[['valuation_date',signal_name]]
         # 检查工作日完整性
-        self._check_working_days_completeness(df1, 'raw_M1M2')
+        self._check_working_days_completeness(df1, 'raw_M1M2', signal_name)
         return df1
     def raw_usdx(self):
         """
@@ -1204,7 +1215,7 @@ class data_prepare:
             df1 = df1[['valuation_date', 'volume']]
             df1.columns = ['valuation_date', index_name]
         # 检查工作日完整性
-        self._check_working_days_completeness(df1, 'raw_index_volume')
+        self._check_working_days_completeness(df1, 'raw_index_volume', index_name)
         return df1
     def raw_internationalIndex(self):
         """
@@ -1264,7 +1275,7 @@ class data_prepare:
         inputpath_index = inputpath + f" WHERE valuation_date between '{self.start_date}' and '{self.end_date}' AND organization='{short_name}'"
         df=gt.data_getting(inputpath_index,config_path)
         # 检查工作日完整性
-        self._check_working_days_completeness(df, 'raw_index_weight')
+        self._check_working_days_completeness(df, 'raw_index_weight', index_name)
         return df
     def raw_index_turnover(self, index_name):
         """
@@ -1290,7 +1301,7 @@ class data_prepare:
             df1 = df1[['valuation_date', 'turn_over']]
             df1.columns = ['valuation_date', index_name]
         # 检查工作日完整性
-        self._check_working_days_completeness(df1, 'raw_index_turnover')
+        self._check_working_days_completeness(df1, 'raw_index_turnover', index_name)
         return df1
     def raw_index_close(self, index_name):
         """
@@ -1318,7 +1329,7 @@ class data_prepare:
             df1 = df1[['valuation_date', 'close']]
             df1.columns = ['valuation_date', index_name]
         # 检查工作日完整性
-        self._check_working_days_completeness(df1, 'raw_index_close')
+        self._check_working_days_completeness(df1, 'raw_index_close', index_name)
         return df1
     def raw_index_amt(self, index_name):
         """
@@ -1346,7 +1357,7 @@ class data_prepare:
             df1 = df1[['valuation_date', 'amt']]
             df1.columns = ['valuation_date', index_name]
         # 检查工作日完整性
-        self._check_working_days_completeness(df1, 'raw_index_amt')
+        self._check_working_days_completeness(df1, 'raw_index_amt', index_name)
         return df1
     def index_return_withdraw(self):
         """
@@ -1785,11 +1796,12 @@ class data_prepare:
 
 if __name__ == "__main__":
     dp=data_prepare('2015-01-03','2026-01-15')
-    df=dp.raw_vp08score_withdraw()
-    df2=dp.target_index()
-    df2=df2[['valuation_date','target_index']]
-    df=df.merge(df2,on='valuation_date',how='left')
-    df.set_index('valuation_date',inplace=True,drop=True)
-    df=(df-df.min())/(df.max()-df.min())
-    df.plot()
-    plt.show()
+    df=dp.raw_index_earningsyield()
+    print(df)
+    # df2=dp.target_index()
+    # df2=df2[['valuation_date','target_index']]
+    # df=df.merge(df2,on='valuation_date',how='left')
+    # df.set_index('valuation_date',inplace=True,drop=True)
+    # df=(df-df.min())/(df.max()-df.min())
+    # df.plot()
+    # plt.show()

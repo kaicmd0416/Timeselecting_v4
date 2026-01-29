@@ -36,6 +36,7 @@ sys.path.append(path)
 import global_tools as gt
 import global_setting.global_dic as glv
 from backtesting.factor_backtesting import factor_backtesting
+from factor_weighting import ICWeighter, ICIRWeighter, SharpeWeighter, MomentumWeighter, ReturnCalculator
 
 # ==================== 全局配置 ====================
 config_path = glv.get('config_path')  # 获取全局配置文件路径
@@ -73,7 +74,7 @@ class L0_signalConstruction:
         L1信号数据的SQL查询基础路径
     """
 
-    def __init__(self, start_date, end_date, mode):
+    def __init__(self, start_date, end_date, mode, weighting_method='ic'):
         """
         初始化L0信号构建类
 
@@ -85,6 +86,8 @@ class L0_signalConstruction:
             结束日期，格式为 'YYYY-MM-DD'
         mode : str
             模式，'prod'（生产模式）或 'test'（测试模式）
+        weighting_method : str
+            加权方式，'equal'（等权，默认）或 'ic'（IC加权）
         """
         # 加载环境变量（包含飞书Webhook URL等敏感信息）
         load_dotenv()
@@ -94,6 +97,7 @@ class L0_signalConstruction:
         self.start_date = start_date
         self.end_date = end_date
         self.mode = mode
+        self.weighting_method = weighting_method
 
         # 根据模式选择对应的数据表路径
         if self.mode == 'prod':
@@ -254,9 +258,58 @@ class L0_signalConstruction:
             else:
                 return 1      # 平均值偏向小盘 → 买小盘
 
-        # 计算所有L1信号的平均值
+        # 计算所有L1信号的平均值或加权平均值
         signal_columns = [col for col in df_final.columns if col != 'valuation_date']
-        df_final['final_value'] = df_final[signal_columns].mean(axis=1)
+
+        if self.weighting_method != 'equal':
+            # 使用非等权加权
+            try:
+                # 获取收益率数据
+                return_calc = ReturnCalculator(
+                    self.start_date, self.end_date,
+                    big_index='沪深300', small_index='中证2000',
+                    level='L0'
+                )
+                df_returns = return_calc.get_relative_returns()
+
+                # 根据加权方式选择加权器
+                if self.weighting_method == 'ic':
+                    weighter = ICWeighter(lookback_window=504, min_periods=504)
+                    method_name = "IC加权"
+                elif self.weighting_method == 'icir':
+                    weighter = ICIRWeighter(lookback_window=504, min_periods=504, ic_window=20)
+                    method_name = "IC_IR加权"
+                elif self.weighting_method == 'sharpe':
+                    weighter = SharpeWeighter(lookback_window=504, min_periods=504)
+                    method_name = "夏普比率加权"
+                elif self.weighting_method == 'momentum':
+                    weighter = MomentumWeighter(lookback_window=252, min_periods=252, decay=0.01)
+                    method_name = "动量加权"
+                else:
+                    raise ValueError(f"未知的加权方式: {self.weighting_method}")
+
+                # 计算权重序列
+                df_weights = weighter.calculate_weights_series(df_final[signal_columns], df_returns)
+
+                # 打印调试信息
+                print("=" * 60)
+                print(f"[调试] {method_name}权重信息:")
+                print(f"信号数据形状: {df_final[signal_columns].shape}")
+                print(f"权重数据形状: {df_weights.shape}")
+                print(f"\n权重样本（最后一行）:\n{df_weights.tail(1).T}")
+                print("=" * 60)
+
+                # 应用权重计算加权平均
+                df_final['final_value'] = weighter.apply_weights(df_final[signal_columns], df_weights)
+                print(f"[{method_name}] L0信号使用{method_name}方式聚合L1信号")
+            except Exception as e:
+                print(f"[加权] 计算失败，回退到等权方式: {e}")
+                import traceback
+                traceback.print_exc()
+                df_final['final_value'] = df_final[signal_columns].mean(axis=1)
+        else:
+            # 使用等权
+            df_final['final_value'] = df_final[signal_columns].mean(axis=1)
 
         # 将平均值转换为离散信号
         df_final['final_signal'] = df_final['final_value'].apply(lambda x: x_processing(x))
@@ -287,7 +340,7 @@ class L0_signalConstruction:
             - 交易成本: 0.00006（万分之0.6，单边）
         """
         # 定义回测使用的指数
-        big_indexName = '沪深300'      # 大盘代表指数
+        big_indexName = '上证50'      # 大盘代表指数
         small_indexName = '中证2000'   # 小盘代表指数
 
         # 先构建L0信号
@@ -312,10 +365,11 @@ class L0_signalConstruction:
 # ==================== 主程序入口 ====================
 if __name__ == "__main__":
     # 参数配置
-    mode = "prod"              # 运行模式：prod-生产环境，test-测试环境
+    mode = "test"              # 运行模式：prod-生产环境，test-测试环境
     start_date = "2015-01-01"  # 回测开始日期
-    end_date = "2026-01-27"    # 回测结束日期
+    end_date = "2026-01-29"    # 回测结束日期
 
     # 创建L0信号构建器并执行回测
-    signal_constructor = L0_signalConstruction(start_date, end_date, mode)
+    # weighting_method 可选: 'equal', 'ic', 'icir', 'sharpe', 'momentum'
+    signal_constructor = L0_signalConstruction(start_date, end_date, mode, weighting_method='equal')
     signal_constructor.L0_backtest_main()
